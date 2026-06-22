@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'heart_rate_database.dart';
+import 'models/heart_rate_reading.dart';
 
 /// Status BLE dari sisi native (watch berperan sebagai peripheral).
 enum BleStatus { idle, advertising, connected, error }
@@ -68,6 +68,25 @@ class BlePeripheral {
     } on PlatformException catch (e) {
       status.value = BleStatus.error;
       message.value = e.message;
+    }
+  }
+
+  /// Tulis [bytes] ke folder Downloads publik lewat MediaStore (tanpa izin
+  /// khusus, Android 10+). Mengembalikan nama file bila sukses, atau null.
+  Future<String?> saveToDownloads(
+    String name,
+    String mime,
+    Uint8List bytes,
+  ) async {
+    try {
+      return await _method.invokeMethod<String>('saveToDownloads', {
+        'name': name,
+        'mime': mime,
+        'bytes': bytes,
+      });
+    } on PlatformException catch (e) {
+      debugPrint('[HR-BLE] saveToDownloads gagal: ${e.message}');
+      return null;
     }
   }
 

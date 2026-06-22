@@ -1,41 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
-/// Satu hasil pembacaan detak jantung beserta waktunya.
-/// [id] berisi rowid dari SQLite (null sebelum disimpan).
-class HeartRateReading {
-  const HeartRateReading({
-    this.id,
-    required this.bpm,
-    required this.accuracy,
-    required this.time,
-  });
-
-  final int? id;
-  final double bpm;
-  final int accuracy;
-  final DateTime time;
-
-  /// Ubah ke map untuk disimpan ke tabel SQLite.
-  Map<String, Object?> toMap() {
-    return {
-      'bpm': bpm,
-      'accuracy': accuracy,
-      // Disimpan sebagai epoch milliseconds agar mudah diurutkan.
-      'time': time.millisecondsSinceEpoch,
-    };
-  }
-
-  /// Buat objek dari satu baris hasil query SQLite.
-  factory HeartRateReading.fromMap(Map<String, Object?> map) {
-    return HeartRateReading(
-      id: map['id'] as int?,
-      bpm: (map['bpm'] as num).toDouble(),
-      accuracy: (map['accuracy'] as num).toInt(),
-      time: DateTime.fromMillisecondsSinceEpoch(map['time'] as int),
-    );
-  }
-}
+import 'models/heart_rate_reading.dart';
 
 /// Helper akses database SQLite untuk menyimpan riwayat detak jantung.
 ///
@@ -109,5 +78,29 @@ class HeartRateDatabase {
   Future<void> clearReadings() async {
     final db = await database;
     await db.delete(_table);
+  }
+
+  /// Seluruh isi tabel sebagai CSV (urut terlama→terbaru), siap diekspor.
+  Future<String> toCsv() async {
+    final db = await database;
+    final rows = await db.query(_table, orderBy: 'time ASC');
+    final buffer = StringBuffer('id,bpm,accuracy,time_ms,time_iso\n');
+    for (final r in rows) {
+      final reading = HeartRateReading.fromMap(r);
+      buffer.writeln(
+        '${reading.id},${reading.bpm},${reading.accuracy},'
+        '${reading.time.millisecondsSinceEpoch},'
+        '${reading.time.toIso8601String()}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  /// Salinan byte file database (WAL di-checkpoint dulu agar konsisten).
+  Future<Uint8List> fileBytes() async {
+    final db = await database;
+    await db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+    final dir = await getDatabasesPath();
+    return File(p.join(dir, _dbName)).readAsBytes();
   }
 }

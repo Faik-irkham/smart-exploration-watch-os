@@ -7,6 +7,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'heart_rate_database.dart';
+import 'models/heart_rate_reading.dart';
 
 /// Status koneksi central (phone) ke watch.
 enum ReceiverStatus { idle, scanning, connecting, connected, error }
@@ -53,10 +54,12 @@ class BleReceiver {
   /// Pesan tambahan (nama/alamat perangkat atau pesan error).
   final ValueNotifier<String?> message = ValueNotifier(null);
 
-  /// Dipancarkan untuk **setiap** record yang berhasil diterima & disimpan,
-  /// agar UI bisa menambahkannya ke daftar secara real-time.
-  final _readingController = StreamController<HeartRateReading>.broadcast();
-  Stream<HeartRateReading> get onReading => _readingController.stream;
+  /// Dipancarkan untuk setiap **batch** record yang berhasil diterima & disimpan
+  /// (urut terlama→terbaru). UI memperbarui daftar dalam satu kali update per
+  /// batch, bukan per record.
+  final _readingsController =
+      StreamController<List<HeartRateReading>>.broadcast();
+  Stream<List<HeartRateReading>> get onReadings => _readingsController.stream;
 
   /// Dipanggil setiap satu **batch** selesai diterima & disimpan ke database;
   /// nilainya adalah jumlah record dalam batch tersebut.
@@ -122,6 +125,25 @@ class BleReceiver {
     _device = null;
     await _stopService();
     _setStatus(ReceiverStatus.idle, null);
+  }
+
+  /// Tulis [bytes] ke folder Downloads publik lewat MediaStore (tanpa izin
+  /// khusus, Android 10+). Mengembalikan nama file bila sukses, atau null.
+  Future<String?> saveToDownloads(
+    String name,
+    String mime,
+    Uint8List bytes,
+  ) async {
+    try {
+      return await _serviceChannel.invokeMethod<String>('saveToDownloads', {
+        'name': name,
+        'mime': mime,
+        'bytes': bytes,
+      });
+    } on PlatformException catch (e) {
+      debugPrint('[RX] saveToDownloads gagal: ${e.message}');
+      return null;
+    }
   }
 
   /// Mulai foreground service agar penerimaan tetap berjalan saat app di
@@ -272,9 +294,7 @@ class BleReceiver {
         'HR-METRIC,rx_batch,${readings.length},${bytes.length},$_rxFrames,'
         '${_rxStopwatch.elapsedMilliseconds},${insertSw.elapsedMilliseconds}',
       );
-      for (final r in readings) {
-        _readingController.add(r);
-      }
+      _readingsController.add(readings);
       _batchController.add(readings.length);
     } catch (e) {
       debugPrint('[RX] gagal parse batch: $e');
@@ -307,7 +327,7 @@ class BleReceiver {
   }
 
   void dispose() {
-    _readingController.close();
+    _readingsController.close();
     _batchController.close();
   }
 }
