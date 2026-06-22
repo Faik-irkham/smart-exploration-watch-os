@@ -17,6 +17,15 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30"/>
 
+    <!-- Foreground service agar penerimaan tetap berjalan saat app di-background
+         atau layar mati. Tipe: connectedDevice (koneksi BLE). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
+    <!-- Menjaga CPU aktif saat layar mati agar callback BLE tetap diproses. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- Notifikasi permanen untuk foreground service (Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true"/>
@@ -47,6 +56,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Foreground service penerima (menjaga proses hidup di background). -->
+        <service
+            android:name=".MonitoringService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice"/>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

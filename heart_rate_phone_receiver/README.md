@@ -68,6 +68,18 @@ flutter run     # pilih perangkat ponsel; nyalakan Bluetooth
 
 > BLE **tidak dapat diemulasikan**. Gunakan ponsel fisik dengan Bluetooth aktif.
 
+## Berjalan di background / layar mati
+
+Saat *Hubungkan watch* ditekan, aplikasi menjalankan **foreground service**
+(`MonitoringService`) dengan notifikasi permanen + `PARTIAL_WAKE_LOCK`, sehingga
+koneksi BLE dan penyimpanan data **tetap berjalan saat app di-background atau
+layar mati**. Service dihentikan saat menekan *Putuskan*.
+
+> Cakupan: background + layar mati. Jika app **ditutup paksa** (di-swipe dari
+> recent) atau reboot, penerimaan berhenti. Pada perangkat OEM agresif
+> (mis. MIUI/Xiaomi) sebaiknya nonaktifkan optimasi baterai untuk app ini agar
+> tidak dibunuh sistem. Butuh `POST_NOTIFICATIONS` (Android 13+).
+
 ## Catatan untuk eksperimen
 
 - Tabel `readings` di sini dibandingkan dengan database watch untuk menghitung *delivery ratio* / packet loss (lihat [docs/EXPERIMENT.md](../docs/EXPERIMENT.md)).

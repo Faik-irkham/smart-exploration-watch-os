@@ -71,6 +71,25 @@ class BlePeripheral {
     }
   }
 
+  /// Mulai foreground service agar pemantauan tetap berjalan saat app di
+  /// background / layar mati. Aman dipanggil berulang.
+  Future<void> startService() async {
+    try {
+      await _method.invokeMethod('startService');
+    } on PlatformException catch (e) {
+      debugPrint('[HR-BLE] startService gagal: ${e.message}');
+    }
+  }
+
+  /// Hentikan foreground service.
+  Future<void> stopService() async {
+    try {
+      await _method.invokeMethod('stopService');
+    } on PlatformException catch (_) {
+      // Menghentikan service yang sudah berhenti tidak masalah.
+    }
+  }
+
   /// Hentikan advertising dan tutup GATT server.
   Future<void> stop() async {
     try {

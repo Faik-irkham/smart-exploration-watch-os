@@ -63,6 +63,19 @@ flutter run     # pilih perangkat smartwatch Wear OS
 > Gunakan smartwatch fisik. Pastikan mode hemat daya nonaktif agar sensor
 > tidak dibatasi sistem.
 
+## Berjalan di background / layar mati
+
+Saat *Izinkan & Mulai* ditekan, aplikasi menjalankan **foreground service**
+(`MonitoringService`) dengan notifikasi permanen + `PARTIAL_WAKE_LOCK`. Ini
+menjaga proses tetap hidup sehingga pembacaan sensor, penyimpanan SQLite, dan
+pengiriman batch BLE **tetap berjalan saat app di-background atau layar watch
+mati**. Service dihentikan saat menekan *Berhenti*.
+
+> Cakupan: background + layar mati. Jika aplikasi **ditutup paksa** (di-swipe
+> dari recent) atau perangkat reboot, pemantauan berhenti — ini batasan yang
+> disengaja (lihat juga keterbatasan OEM/Wear OS). Butuh `POST_NOTIFICATIONS`
+> (Android 13+) agar notifikasi service tampil.
+
 ## Catatan untuk eksperimen
 
 - Akhir sesi, isi tabel `readings` adalah *ground truth* data watch — gunakan untuk membandingkan dengan database penerima (lihat [docs/EXPERIMENT.md](../docs/EXPERIMENT.md)).

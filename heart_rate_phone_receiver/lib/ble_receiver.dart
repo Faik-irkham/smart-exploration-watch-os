@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -20,6 +21,10 @@ class BleReceiver {
   BleReceiver._();
 
   static final BleReceiver instance = BleReceiver._();
+
+  // Kontrol foreground service native (lihat MainActivity.kt). Harus sama
+  // dengan nama channel di sisi Android.
+  static const _serviceChannel = MethodChannel('hr_receiver/service');
 
   // Harus identik dengan UUID di MainActivity.kt pada project watch.
   static final Guid recordServiceUuid =
@@ -80,6 +85,9 @@ class BleReceiver {
       return;
     }
 
+    // Jaga proses tetap hidup di background / layar mati selama menerima.
+    await _startService();
+
     _setStatus(ReceiverStatus.scanning, 'Mencari watch…');
 
     _scanSub?.cancel();
@@ -112,7 +120,27 @@ class BleReceiver {
       await _device?.disconnect();
     } catch (_) {}
     _device = null;
+    await _stopService();
     _setStatus(ReceiverStatus.idle, null);
+  }
+
+  /// Mulai foreground service agar penerimaan tetap berjalan saat app di
+  /// background / layar mati.
+  Future<void> _startService() async {
+    try {
+      await _serviceChannel.invokeMethod('startService');
+    } on PlatformException catch (e) {
+      debugPrint('[RX] startService gagal: ${e.message}');
+    }
+  }
+
+  /// Hentikan foreground service.
+  Future<void> _stopService() async {
+    try {
+      await _serviceChannel.invokeMethod('stopService');
+    } on PlatformException catch (_) {
+      // Menghentikan service yang sudah berhenti tidak masalah.
+    }
   }
 
   Future<void> _stopScan() async {
@@ -259,6 +287,8 @@ class BleReceiver {
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
       Permission.locationWhenInUse,
+      // Android 13+: notifikasi untuk foreground service.
+      Permission.notification,
     ].request();
     // Cukup selama scan & connect diberikan (lokasi hanya relevan di Android lama).
     return (statuses[Permission.bluetoothScan]?.isGranted ?? false) &&

@@ -14,6 +14,7 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
+import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -22,6 +23,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -68,6 +70,17 @@ class MainActivity : FlutterActivity() {
                     result.success(accepted)
                 }
                 "isConnected" -> result.success(server.isConnected())
+                "startService" -> {
+                    ContextCompat.startForegroundService(
+                        this,
+                        Intent(this, MonitoringService::class.java),
+                    )
+                    result.success(null)
+                }
+                "stopService" -> {
+                    stopService(Intent(this, MonitoringService::class.java))
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         }

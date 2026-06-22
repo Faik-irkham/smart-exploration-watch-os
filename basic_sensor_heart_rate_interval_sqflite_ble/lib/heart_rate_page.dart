@@ -69,6 +69,7 @@ class _HeartRatePageState extends State<HeartRatePage>
     _ble.status.removeListener(_onBleChanged);
     _ble.message.removeListener(_onBleChanged);
     _ble.stop();
+    _ble.stopService();
     _pulseController.dispose();
     super.dispose();
   }
@@ -101,10 +102,12 @@ class _HeartRatePageState extends State<HeartRatePage>
         _permanentlyDenied = false;
         _denied = false;
       });
-      // Izin Bluetooth (Android 12+) untuk advertising & melayani GATT.
+      // Izin Bluetooth (Android 12+) untuk advertising & melayani GATT, serta
+      // izin notifikasi (Android 13+) untuk notifikasi foreground service.
       await [
         Permission.bluetoothAdvertise,
         Permission.bluetoothConnect,
+        Permission.notification,
       ].request();
       _start();
     } else if (status.isPermanentlyDenied || status.isRestricted) {
@@ -131,6 +134,9 @@ class _HeartRatePageState extends State<HeartRatePage>
       _latestAccuracy = 0;
       _untilSync = Duration(minutes: _intervalMinutes);
     });
+
+    // Jaga proses tetap hidup di background / layar mati.
+    _ble.startService();
 
     // Mulai mengiklankan agar smartphone bisa terhubung.
     _ble.start();
@@ -181,6 +187,7 @@ class _HeartRatePageState extends State<HeartRatePage>
   void _stop() {
     _cancelTimersAndStream();
     _ble.stop();
+    _ble.stopService();
     setState(() {
       _running = false;
       _untilSync = Duration.zero;
