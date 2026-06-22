@@ -5,6 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -35,6 +36,10 @@ class HeartRateStreamHandler(
     private val context: Context,
 ) : EventChannel.StreamHandler, SensorEventListener {
 
+    companion object {
+        private const val TAG = "HR"
+    }
+
     private var sensorManager: SensorManager? = null
     private var heartRateSensor: Sensor? = null
     private var eventSink: EventChannel.EventSink? = null
@@ -54,7 +59,21 @@ class HeartRateStreamHandler(
             return
         }
         heartRateSensor = sensor
-        manager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+
+        // registerListener mengembalikan false bila sensor gagal didaftarkan
+        // (mis. izin BODY_SENSORS belum benar-benar diberikan). Tanpa cek ini,
+        // LED hijau tidak akan menyala dan app diam tanpa pesan.
+        val registered =
+            manager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        Log.d(TAG, "registerListener heart rate => $registered")
+        if (!registered) {
+            events?.error(
+                "REGISTER_FAILED",
+                "Gagal mengaktifkan sensor. Pastikan izin Sensor tubuh diizinkan " +
+                    "dan mode hemat daya mati.",
+                null,
+            )
+        }
     }
 
     override fun onCancel(arguments: Any?) {

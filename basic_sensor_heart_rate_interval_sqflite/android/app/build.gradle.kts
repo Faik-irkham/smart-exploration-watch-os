@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "com.flutfy.basic_sensor_heart_rate_interval_sqflite"
-    compileSdk = 35
+    // sqflite_android minta di-compile dengan SDK 36 (compileSdk hanya soal
+    // waktu compile dan backward compatible — aman dinaikkan).
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
