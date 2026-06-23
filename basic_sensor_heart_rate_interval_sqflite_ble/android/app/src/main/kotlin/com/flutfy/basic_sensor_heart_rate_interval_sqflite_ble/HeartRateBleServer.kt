@@ -45,6 +45,9 @@ class HeartRateBleServer(private val context: Context) {
         // sama dengan yang dipakai aplikasi phone saat scan/subscribe.
         val RECORD_SERVICE_UUID: UUID = UUID.fromString("0000a100-0000-1000-8000-00805f9b34fb")
         val RECORD_CHAR_UUID: UUID = UUID.fromString("0000a101-0000-1000-8000-00805f9b34fb")
+        // Karakteristik ACK: ponsel menulis konfirmasi setelah menyimpan batch,
+        // sehingga watch baru menandai data terkirim setelah benar-benar diterima.
+        val ACK_CHAR_UUID: UUID = UUID.fromString("0000a102-0000-1000-8000-00805f9b34fb")
         // Client Characteristic Configuration Descriptor (untuk enable notify).
         val CCCD_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
@@ -80,6 +83,7 @@ class HeartRateBleServer(private val context: Context) {
     private var batchStartNs = 0L      // waktu mulai mengirim frame pertama
 
     private var statusSink: EventChannel.EventSink? = null
+    private var ackSink: EventChannel.EventSink? = null
 
     val statusHandler = object : EventChannel.StreamHandler {
         override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
@@ -90,6 +94,18 @@ class HeartRateBleServer(private val context: Context) {
 
         override fun onCancel(arguments: Any?) {
             statusSink = null
+        }
+    }
+
+    /// Aliran ACK ke Dart: tiap kali ponsel menulis konfirmasi, jumlah record
+    /// yang dikonfirmasi dipancarkan agar Dart menandai data terkirim.
+    val ackHandler = object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+            ackSink = events
+        }
+
+        override fun onCancel(arguments: Any?) {
+            ackSink = null
         }
     }
 
@@ -148,6 +164,15 @@ class HeartRateBleServer(private val context: Context) {
         )
         characteristic.addDescriptor(cccd)
         service.addCharacteristic(characteristic)
+
+        // Karakteristik ACK (write): ponsel menulis konfirmasi penerimaan batch.
+        val ackCharacteristic = BluetoothGattCharacteristic(
+            ACK_CHAR_UUID,
+            BluetoothGattCharacteristic.PROPERTY_WRITE,
+            BluetoothGattCharacteristic.PERMISSION_WRITE,
+        )
+        service.addCharacteristic(ackCharacteristic)
+
         server.addService(service)
         recordChar = characteristic
     }
@@ -324,6 +349,37 @@ class HeartRateBleServer(private val context: Context) {
         override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
             // Flow-control: kirim chunk berikutnya setelah yang sebelumnya tuntas.
             sendNextFrame()
+        }
+
+        @SuppressLint("MissingPermission")
+        override fun onCharacteristicWriteRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            characteristic: BluetoothGattCharacteristic?,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray?,
+        ) {
+            if (characteristic?.uuid == ACK_CHAR_UUID) {
+                // Payload ACK = jumlah record yang berhasil disimpan ponsel (teks).
+                val count = value?.toString(Charsets.UTF_8)?.trim()?.toIntOrNull() ?: 0
+                Log.d(TAG, "ACK diterima: $count record")
+                mainHandler.post { ackSink?.success(count) }
+            }
+            if (responseNeeded) {
+                try {
+                    gattServer?.sendResponse(
+                        device,
+                        requestId,
+                        android.bluetooth.BluetoothGatt.GATT_SUCCESS,
+                        offset,
+                        value,
+                    )
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "sendResponse(ack)", e)
+                }
+            }
         }
 
         @SuppressLint("MissingPermission")

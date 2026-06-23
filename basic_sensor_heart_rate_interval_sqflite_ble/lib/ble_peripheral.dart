@@ -29,6 +29,14 @@ class BlePeripheral {
   // Harus sama dengan nama channel di MainActivity.kt.
   static const _method = MethodChannel('heart_rate/ble');
   static const _statusChannel = EventChannel('heart_rate/ble/status');
+  static const _ackChannel = EventChannel('heart_rate/ble/ack');
+
+  // Aliran ACK dari ponsel (jumlah record yang dikonfirmasi tersimpan).
+  Stream<int>? _ackStream;
+  Stream<int> get _acks => _ackStream ??= _ackChannel
+      .receiveBroadcastStream()
+      .map((e) => (e as num).toInt())
+      .asBroadcastStream();
 
   /// Status koneksi terkini, dipakai UI untuk menampilkan indikator.
   final ValueNotifier<BleStatus> status = ValueNotifier(BleStatus.idle);
@@ -151,5 +159,31 @@ class BlePeripheral {
       // Jika belum ada yang terhubung, native akan mengabaikan dengan aman.
       return false;
     }
+  }
+
+  /// Kirim batch lalu **tunggu ACK** dari ponsel (konfirmasi data tersimpan).
+  ///
+  /// Mengembalikan `true` hanya bila ponsel mengonfirmasi penerimaan dalam
+  /// [timeout]; jika tidak, `false` agar pemanggil tidak menandai record
+  /// terkirim (data akan dikirim ulang pada interval berikutnya).
+  Future<bool> sendBatchAndAwaitAck(
+    List<HeartRateReading> readings, {
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    if (readings.isEmpty) return false;
+    final completer = Completer<bool>();
+    // Berlangganan ACK sebelum mengirim agar tidak ada yang terlewat.
+    final sub = _acks.listen((_) {
+      if (!completer.isCompleted) completer.complete(true);
+    });
+    final timer = Timer(timeout, () {
+      if (!completer.isCompleted) completer.complete(false);
+    });
+    final sent = await sendBatch(readings);
+    if (!sent && !completer.isCompleted) completer.complete(false);
+    final ok = await completer.future;
+    await sub.cancel();
+    timer.cancel();
+    return ok;
   }
 }

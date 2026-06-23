@@ -1,0 +1,8 @@
+# Data hasil ekspor & analisis (artefak eksperimen, bukan sumber)
+/hr_analysis/
+/watch.csv
+/phone.csv
+/watch.db
+/phone.db
+/watch.db-*
+/phone.db-*

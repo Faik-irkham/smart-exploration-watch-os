@@ -23,6 +23,7 @@ class MainActivity : FlutterActivity() {
         private const val HEART_RATE_CHANNEL = "heart_rate/stream"
         private const val BLE_METHOD_CHANNEL = "heart_rate/ble"
         private const val BLE_STATUS_CHANNEL = "heart_rate/ble/status"
+        private const val BLE_ACK_CHANNEL = "heart_rate/ble/ack"
     }
 
     private var bleServer: HeartRateBleServer? = null
@@ -39,6 +40,7 @@ class MainActivity : FlutterActivity() {
         val server = HeartRateBleServer(applicationContext)
         bleServer = server
         EventChannel(messenger, BLE_STATUS_CHANNEL).setStreamHandler(server.statusHandler)
+        EventChannel(messenger, BLE_ACK_CHANNEL).setStreamHandler(server.ackHandler)
         MethodChannel(messenger, BLE_METHOD_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "startAdvertising" -> {

@@ -32,6 +32,9 @@ class BleReceiver {
       Guid('0000a100-0000-1000-8000-00805f9b34fb');
   static final Guid recordCharUuid =
       Guid('0000a101-0000-1000-8000-00805f9b34fb');
+  // Karakteristik ACK: phone menulis konfirmasi setelah menyimpan batch.
+  static final Guid ackCharUuid =
+      Guid('0000a102-0000-1000-8000-00805f9b34fb');
 
   // Opcode pada byte pertama tiap notifikasi (sama dengan watch).
   static const _opStart = 0x01;
@@ -67,6 +70,7 @@ class BleReceiver {
   Stream<int> get onBatch => _batchController.stream;
 
   BluetoothDevice? _device;
+  BluetoothCharacteristic? _ackChar; // untuk menulis ACK ke watch
   StreamSubscription<List<ScanResult>>? _scanSub;
   StreamSubscription<BluetoothConnectionState>? _connStateSub;
   StreamSubscription<List<int>>? _valueSub;
@@ -210,10 +214,12 @@ class BleReceiver {
   Future<void> _subscribe(BluetoothDevice device) async {
     final services = await device.discoverServices();
     BluetoothCharacteristic? recordChar;
+    _ackChar = null;
     for (final service in services) {
       if (service.uuid != recordServiceUuid) continue;
       for (final c in service.characteristics) {
         if (c.uuid == recordCharUuid) recordChar = c;
+        if (c.uuid == ackCharUuid) _ackChar = c;
       }
     }
 
@@ -261,6 +267,18 @@ class BleReceiver {
     }
   }
 
+  /// Tulis ACK (jumlah record yang tersimpan) ke karakteristik ACK di watch.
+  Future<void> _sendAck(int count) async {
+    final ack = _ackChar;
+    if (ack == null) return;
+    try {
+      await ack.write(utf8.encode('$count'), withoutResponse: false);
+      debugPrint('[RX] ACK terkirim: $count record');
+    } catch (e) {
+      debugPrint('[RX] gagal kirim ACK: $e');
+    }
+  }
+
   /// Rakit isi [_rxBuffer] menjadi daftar record, simpan, lalu pancarkan.
   Future<void> _flushBuffer() async {
     if (_rxBuffer.isEmpty) return;
@@ -294,6 +312,9 @@ class BleReceiver {
         'HR-METRIC,rx_batch,${readings.length},${bytes.length},$_rxFrames,'
         '${_rxStopwatch.elapsedMilliseconds},${insertSw.elapsedMilliseconds}',
       );
+      // Kirim ACK ke watch (jumlah record tersimpan) agar watch menandai data
+      // terkirim. Tanpa ACK, watch akan mengirim ulang batch ini nanti.
+      await _sendAck(readings.length);
       _readingsController.add(readings);
       _batchController.add(readings.length);
     } catch (e) {

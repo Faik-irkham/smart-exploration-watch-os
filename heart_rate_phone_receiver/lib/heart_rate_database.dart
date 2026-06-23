@@ -27,7 +27,7 @@ class HeartRateDatabase {
     final path = p.join(dir, _dbName);
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table (
@@ -37,6 +37,25 @@ class HeartRateDatabase {
             time INTEGER NOT NULL
           )
         ''');
+        // Indeks unik pada time mencegah duplikat saat watch mengirim ulang
+        // batch (mis. ACK hilang) — store-and-forward jadi aman.
+        await db.execute(
+          'CREATE UNIQUE INDEX idx_${_table}_time ON $_table(time)',
+        );
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // v1 -> v2: buang duplikat lama (sisakan id terkecil), lalu buat indeks
+        // unik pada time.
+        if (oldVersion < 2) {
+          await db.execute(
+            'DELETE FROM $_table WHERE id NOT IN '
+            '(SELECT MIN(id) FROM $_table GROUP BY time)',
+          );
+          await db.execute(
+            'CREATE UNIQUE INDEX IF NOT EXISTS idx_${_table}_time '
+            'ON $_table(time)',
+          );
+        }
       },
     );
     return _db!;
@@ -45,7 +64,11 @@ class HeartRateDatabase {
   /// Simpan satu pembacaan dan kembalikan objek dengan [id] terisi.
   Future<HeartRateReading> insertReading(HeartRateReading reading) async {
     final db = await database;
-    final id = await db.insert(_table, reading.toMap());
+    final id = await db.insert(
+      _table,
+      reading.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
     return HeartRateReading(
       id: id,
       bpm: reading.bpm,
@@ -61,7 +84,11 @@ class HeartRateDatabase {
     final db = await database;
     final batch = db.batch();
     for (final r in readings) {
-      batch.insert(_table, r.toMap());
+      batch.insert(
+        _table,
+        r.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
     }
     final results = await batch.commit(noResult: false);
     return results.length;

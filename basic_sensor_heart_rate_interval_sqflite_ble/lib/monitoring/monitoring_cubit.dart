@@ -183,7 +183,9 @@ class MonitoringCubit extends Cubit<MonitoringState> {
     if (pending.isEmpty) return;
 
     emit(state.copyWith(flushing: true));
-    final ok = await _ble.sendBatch(pending);
+    // Tandai terkirim hanya setelah ponsel mengonfirmasi (ACK). Jika tidak ada
+    // ACK, record dibiarkan belum terkirim untuk dikirim ulang nanti.
+    final ok = await _ble.sendBatchAndAwaitAck(pending);
     if (ok) {
       final ids = [for (final r in pending) if (r.id != null) r.id!];
       await _db.markSynced(ids);

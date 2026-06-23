@@ -108,6 +108,22 @@ justru menunjukkan mekanisme *store-and-forward* berfungsi sebagaimana mestinya.
 
 *[Gambar 5 — Cuplikan data hasil ekspor (CSV) dari smartwatch dan smartphone]*
 
+### Keterbatasan
+
+Eksekusi di latar belakang saat ini mencakup kondisi aplikasi berjalan di latar
+belakang dan layar dalam keadaan mati. Namun bila aplikasi **ditutup paksa**
+(dihapus dari daftar aplikasi terbaru) atau perangkat **dimatikan/di-reboot**
+(misalnya setelah baterai habis), proses perekaman **belum** berjalan kembali
+secara otomatis. Hal ini karena logika perekaman masih melekat pada antarmuka
+aplikasi, dan dibatasi pula oleh kebijakan hemat daya sistem operasi (Wear OS dan
+produsen tertentu cukup ketat membatasi proses latar belakang).
+
+Untuk membuat perekaman tetap berjalan saat aplikasi ditutup serta menyala
+otomatis setelah perangkat dihidupkan kembali, diperlukan pemindahan logika
+perekaman ke dalam *service* mandiri serta penambahan mekanisme *auto-start*
+setelah *boot*. Peningkatan ini direncanakan sebagai pengembangan berikutnya,
+dengan catatan keandalannya tetap bergantung pada kebijakan hemat daya perangkat.
+
 ### Kesimpulan dan Rencana Selanjutnya
 
 Pada tahap ini, sistem telah mampu merekam detak jantung secara berkelanjutan,
