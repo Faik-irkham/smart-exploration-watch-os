@@ -6,60 +6,82 @@
 
 ---
 
-## 1. Tujuan penelitian (ringkas)
+## 1. Tujuan (ringkas)
 
-Membangun dua aplikasi yang saling terhubung: aplikasi pada **smartwatch** membaca
-detak jantung lalu mengirimkannya ke aplikasi pada **smartphone** melalui Bluetooth
-(BLE), dengan jaminan **data tidak hilang** walau koneksi sempat terputus. Sistem
-ini menjadi objek pengukuran untuk artikel ilmiah.
+Membangun dua aplikasi: aplikasi di **smartwatch** membaca detak jantung lalu
+mengirimkannya ke aplikasi di **smartphone** melalui Bluetooth (BLE), dengan
+upaya agar **data tidak hilang** walau koneksi sempat terputus.
 
-## 2. Yang dikerjakan periode ini
+## 2. Perangkat uji
 
-1. Menyelesaikan komunikasi data dua arah antara smartwatch dan smartphone, dan
-   mengujinya langsung pada **perangkat fisik** (bukan emulator, karena Bluetooth
-   tidak dapat diuji di emulator).
-2. Menambahkan **pencatatan metrik otomatis** (jumlah data, waktu kirim, kecepatan,
-   keberhasilan) agar hasil dapat diukur dan dilaporkan secara objektif.
-3. Membuat sistem tetap bekerja **saat aplikasi berjalan di latar belakang atau
-   layar mati**, supaya perekaman tidak terputus saat dipakai sehari-hari.
-4. Menambahkan fitur **ekspor data** (format CSV dan basis data) agar data hasil
-   percobaan mudah diambil dan dianalisis.
-5. Merapikan struktur kode agar lebih terorganisir dan mudah dikembangkan.
+| Peran | Perangkat | OS |
+|-------|-----------|-----|
+| Pengirim | Samsung Galaxy Watch (SM-R860) | Wear OS |
+| Penerima | Xiaomi Redmi Note 10 Pro | Android 13 |
 
-## 3. Hasil utama & bukti
+Pengujian dilakukan pada **perangkat fisik** (Bluetooth tidak bisa diuji di emulator).
 
-Pengujian fungsional berhasil: satu paket data berisi **228 pembacaan detak jantung**
-terkirim dari smartwatch dan **diterima seluruhnya** oleh smartphone.
+---
+
+## 3. Yang sudah BERHASIL ✅
+
+1. **Koneksi & pengiriman data dua arah** antara smartwatch dan smartphone
+   berjalan (scan → connect → kirim data).
+2. **Perekaman jangka panjang**: dalam satu sesi, smartwatch merekam **2.167
+   pembacaan** detak jantung selama **± 36 menit** tanpa henti.
+3. **Penyimpanan lokal** di kedua perangkat (basis data) berfungsi.
+4. **Pencatatan metrik otomatis** (jumlah data, waktu kirim, kecepatan) sudah
+   aktif sehingga hasil dapat diukur secara objektif.
+5. **Fitur ekspor data** ke format CSV dan basis data berhasil — data percobaan
+   dapat diambil dari kedua perangkat untuk dianalisis.
+6. **Kesesuaian data terbukti pada data yang berhasil diterima**: seluruh 1.264
+   pembacaan yang sampai di smartphone **identik** dengan catatan di smartwatch
+   (dicocokkan berdasarkan waktu pencatatan).
+
+*(Lampiran tangkapan layar: aplikasi smartwatch saat merekam, aplikasi
+smartphone saat menerima — akan dilampirkan.)*
+
+## 4. Yang BELUM BERHASIL / perlu diperbaiki ⚠️
+
+Pada sesi uji yang lebih lama, ditemukan **kehilangan data**:
 
 | Indikator | Hasil |
 |-----------|-------|
-| Data terkirim | 228 pembacaan |
-| Data diterima | 228 pembacaan |
-| **Keberhasilan pengiriman (delivery ratio)** | **100% (tidak ada data hilang)** |
-| Waktu pengiriman satu paket | ± 0,3 detik |
-| Ukuran data | ± 10,7 KB |
+| Direkam smartwatch | 2.167 pembacaan (06:38–07:15, ± 36 menit) |
+| Diterima smartphone | 1.264 pembacaan (berhenti 07:00, ± 21 menit) |
+| **Data hilang** | **903 pembacaan** |
+| **Keberhasilan pengiriman (delivery ratio)** | **58,33%** |
 
-**Artinya:** mekanisme inti penelitian sudah berfungsi dan terbukti andal pada
-kondisi normal. Kesesuaian data dicek berdasarkan **waktu pencatatan** tiap
-pembacaan, sehingga perhitungan keberhasilan tidak terpengaruh perbedaan jam
-antar perangkat.
+**Temuan:** penerima (smartphone) **berhenti menerima di tengah sesi** (sekitar
+menit ke-21), sedangkan smartwatch tetap merekam sampai menit ke-36. Akibatnya
+data setelah menit ke-21 tidak tersimpan di smartphone.
 
-## 4. Kendala
+**Dugaan penyebab (akan diverifikasi):**
+1. Aplikasi penerima kemungkinan terhenti/dihentikan sistem saat berpindah ke
+   latar belakang atau layar mati (Android Xiaomi cenderung agresif menutup
+   aplikasi latar belakang).
+2. Smartwatch menandai data sebagai "terkirim" begitu Bluetooth masih terhubung,
+   **tanpa konfirmasi** bahwa data benar-benar diterima smartphone. Jika
+   penerima diam-diam berhenti, data tetap dianggap terkirim sehingga hilang.
 
-- Pengujian wajib memakai dua perangkat fisik (Bluetooth tidak bisa diemulasikan).
-- Pada smartphone tertentu (mis. Xiaomi/MIUI), sistem operasi cenderung menutup
-  aplikasi latar belakang; perlu pengaturan agar tidak dihentikan saat percobaan.
+> Catatan: pada uji singkat sebelumnya (satu paket kecil) keberhasilan mencapai
+> 100%. Masalah ini baru muncul pada sesi panjang, sehingga penting untuk
+> diperbaiki sebelum pengukuran formal.
 
-## 5. Rencana berikutnya
+## 5. Rencana perbaikan & langkah berikutnya
 
-1. Pengukuran formal dengan **variasi kondisi**: interval pengiriman (3 vs 5 menit),
-   jarak antar-perangkat, dan skenario koneksi terputus.
-2. **Pengulangan** tiap kondisi beberapa kali untuk memperoleh rata-rata dan
-   simpangan baku.
-3. Analisis: keberhasilan pengiriman, waktu/kecepatan transfer, dan konsumsi daya.
-4. Menyusun **tabel dan grafik hasil** sebagai bahan naskah artikel.
+1. **Memastikan aplikasi penerima tetap berjalan** di latar belakang/layar mati
+   (mekanisme *foreground service* sudah ditambahkan dan akan diuji ulang).
+2. **Menambahkan konfirmasi penerimaan**: smartwatch hanya menandai data
+   "terkirim" setelah smartphone memastikan data sudah tersimpan, agar data yang
+   belum sampai dikirim ulang (mencegah kehilangan).
+3. Mengulang pengujian sesi panjang untuk memastikan delivery ratio mendekati
+   100%.
+4. Setelah stabil: pengukuran formal dengan variasi (interval, jarak, gangguan
+   koneksi) dan pengulangan, lalu menyusun tabel & grafik untuk naskah artikel.
 
-## 6. Status
+## 6. Status keseluruhan
 
-Tahap pengembangan sistem dan uji fungsional **selesai**. Tahap berikutnya adalah
-**pengumpulan data percobaan** untuk analisis dan penulisan artikel.
+Pengembangan sistem dan **uji fungsional dasar selesai**. Saat ini fokus pada
+**perbaikan keandalan pengiriman jangka panjang** sebelum masuk ke tahap
+pengumpulan data untuk analisis.
