@@ -11,7 +11,7 @@ set -u
 
 WATCH="${1:-192.168.1.23:43455}"
 PHONE="${2:-192.168.1.15:41907}"
-OUT_DIR="${3:-$HOME/hr_data}"
+OUT_DIR="${3:-$HOME/flutter/smart-exploration-watch-os/}"
 mkdir -p "$OUT_DIR"
 
 # pull_latest <serial> <glob> <local_out>
