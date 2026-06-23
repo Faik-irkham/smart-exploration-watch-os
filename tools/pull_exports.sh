@@ -10,7 +10,7 @@
 set -u
 
 WATCH="${1:-192.168.1.23:43455}"
-PHONE="${2:-192.168.1.15:41907}"
+PHONE="${2:-192.168.1.15:41261}"
 OUT_DIR="${3:-$HOME/flutter/smart-exploration-watch-os/}"
 mkdir -p "$OUT_DIR"
 
