@@ -79,17 +79,17 @@ class _HeartRateViewState extends State<_HeartRateView>
     MonitoringCubit cubit, {
     required bool csv,
   }) async {
-    final name = csv ? await cubit.exportCsv() : await cubit.exportDb();
+    String message;
+    try {
+      final name = csv ? await cubit.exportCsv() : await cubit.exportDb();
+      message = name != null
+          ? 'Tersimpan: Download/$name'
+          : 'Ekspor gagal (butuh Android 10+)';
+    } catch (e) {
+      message = 'Ekspor gagal: $e';
+    }
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          name != null
-              ? 'Tersimpan: Download/$name'
-              : 'Ekspor gagal (butuh Android 10+)',
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Dua tombol kecil untuk ekspor CSV / file .db ke Downloads.

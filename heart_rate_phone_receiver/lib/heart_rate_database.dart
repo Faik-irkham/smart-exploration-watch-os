@@ -126,7 +126,11 @@ class HeartRateDatabase {
   /// Salinan byte file database (WAL di-checkpoint dulu agar konsisten).
   Future<Uint8List> fileBytes() async {
     final db = await database;
-    await db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+    // Checkpoint WAL agar file .db konsisten. Pakai rawQuery (PRAGMA ini
+    // mengembalikan baris); dibungkus try-catch karena bersifat opsional.
+    try {
+      await db.rawQuery('PRAGMA wal_checkpoint(TRUNCATE)');
+    } catch (_) {}
     final dir = await getDatabasesPath();
     return File(p.join(dir, _dbName)).readAsBytes();
   }
