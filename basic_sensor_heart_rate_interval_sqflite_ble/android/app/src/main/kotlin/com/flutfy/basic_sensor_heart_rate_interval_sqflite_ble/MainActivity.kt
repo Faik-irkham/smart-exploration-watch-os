@@ -12,7 +12,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * Activity Flutter yang mendaftarkan kanal komunikasi ke native:
+ * Activity Flutter yang mendaftarkan channel komunikasi ke native:
  * - [HeartRateStreamHandler] untuk streaming sensor,
  * - [HeartRateBleServer] untuk BLE peripheral (GATT + advertising),
  * - [MonitoringService] untuk menjaga proses hidup di background.

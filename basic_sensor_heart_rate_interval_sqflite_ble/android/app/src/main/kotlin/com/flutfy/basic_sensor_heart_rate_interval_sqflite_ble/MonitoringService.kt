@@ -41,7 +41,7 @@ class MonitoringService : Service() {
         startAsForeground()
         acquireWakeLock()
         Log.d(TAG, "foreground service dimulai")
-        // START_STICKY: jika sistem membunuh service saat sumber daya menipis,
+        // START_STICKY: jika sistem menghentikan service saat sumber daya menipis,
         // sistem mencoba membuat ulang (tanpa intent terakhir).
         return START_STICKY
     }
