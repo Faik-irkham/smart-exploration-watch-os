@@ -382,7 +382,7 @@ def fig_gatt():
     box(ax, R, 22.2, 3.8, 1.1, "Phone — Central\nGATT Client", fs=9)
     line(ax, [(L, 1.6), (L, 21.6)])
     line(ax, [(R, 1.6), (R, 21.6)])
-    small(ax, GX, 21.1, "Step", fs=8.4)
+    small(ax, GX, 21.45, "Step", fs=8.4)
 
     step = [0]
 
@@ -419,32 +419,34 @@ def fig_gatt():
     lnote(11.4, "onDescriptorWriteRequest:\nsubscribers.add(device)")
     msg(10.4, L, R, "sendResponse(SUCCESS)", dashed=True)
     # -- Notify (transfer batch, flow-controlled) --
-    lnote(9.3, "sendBatch -> frame queue\n[ START | DATA x n | END ]")
-    msg(8.0, L, R, "notifyCharacteristicChanged(frame)", fs=7.7)
-    rnote(7.2, "onValueReceived ->\nreassemble (_rxBuffer)")
-    lnote(6.4, "onNotificationSent ->\nsend next frame")
-    rnote(5.2, "on END: decode JSON array ->\ninsertReadings (INSERT OR IGNORE)")
+    lnote(9.5, "sendBatch -> frame queue\n[ START | DATA x n | END ]")
+    msg(7.9, L, R, "notifyCharacteristicChanged(frame)", fs=7.7)
+    rnote(7.0, "onValueReceived ->\nreassemble (_rxBuffer)")
+    lnote(6.1, "onNotificationSent ->\nsend next frame")
+    rnote(5.0, "on END: decode JSON array ->\ninsertReadings (INSERT OR IGNORE)")
     # -- Acknowledge (write-back) --
-    msg(4.2, R, L, "write ACK char = record count", dashed=True)
-    lnote(3.2, "onCharacteristicWriteRequest:\nmarkSynced = 1")
-    msg(2.2, L, R, "sendResponse(SUCCESS)", dashed=True)
+    msg(4.0, R, L, "write ACK char = record count", dashed=True)
+    lnote(3.0, "onCharacteristicWriteRequest:\nmarkSynced = 1")
+    msg(2.0, L, R, "sendResponse(SUCCESS)", dashed=True)
 
     # ===== UML 'loop' fragment di sekitar transfer per-frame =====
-    lx0, lx1, ly0, ly1 = 4.9, 13.6, 5.85, 8.5
+    # Bingkai sengaja dibuat tinggi: tab di atas pesan pertama agar tidak
+    # bertumpuk dengan label "notifyCharacteristicChanged(frame)".
+    lx0, lx1, ly0, ly1 = 4.9, 13.6, 5.55, 9.0
     ax.add_patch(Polygon([(lx0, ly0), (lx1, ly0), (lx1, ly1), (lx0, ly1)],
         closed=True, fill=False, edgecolor=BLACK, linewidth=1.0, zorder=1))
-    ax.add_patch(Polygon([(lx0, ly1), (lx0 + 2.0, ly1), (lx0 + 2.0, ly1 - 0.34),
-        (lx0 + 1.7, ly1 - 0.54), (lx0, ly1 - 0.54)], closed=True, fill=True,
+    ax.add_patch(Polygon([(lx0, ly1), (lx0 + 2.3, ly1), (lx0 + 2.3, ly1 - 0.28),
+        (lx0 + 2.0, ly1 - 0.44), (lx0, ly1 - 0.44)], closed=True, fill=True,
         facecolor=WHITE, edgecolor=BLACK, linewidth=1.0, zorder=6))
-    ax.text(lx0 + 0.95, ly1 - 0.27, "loop [per frame]", fontsize=7.3,
+    ax.text(lx0 + 1.15, ly1 - 0.22, "loop [per frame]", fontsize=7.2,
             fontweight="bold", ha="center", va="center", zorder=7)
 
     # ===== bracket fase (kiri) =====
     bracket(ax, 2.2, 21.25, 19.25, "Setup\n(server)", fs=8.5)
     bracket(ax, 2.2, 18.95, 13.05, "Connect &\ndiscover", fs=8.5)
     bracket(ax, 2.2, 12.85, 9.95, "Subscribe\n(CCCD)", fs=8.5)
-    bracket(ax, 2.2, 9.75, 4.75, "Notify\n(flow control)", fs=8.5)
-    bracket(ax, 2.2, 4.65, 1.75, "ACK", fs=8.5)
+    bracket(ax, 2.2, 9.9, 4.6, "Notify\n(flow control)", fs=8.5)
+    bracket(ax, 2.2, 4.4, 1.6, "ACK", fs=8.5)
 
     # ===== catatan kaki & legenda =====
     small(ax, 7.7, 1.0,
