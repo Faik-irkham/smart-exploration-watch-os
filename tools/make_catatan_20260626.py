@@ -9,8 +9,15 @@ figures/fig_gatt.png dan figures/fig_framing.png.
 
 Pakai:  python3 tools/make_catatan_20260626.py
 Output: docs/26-06-26-Catatan-Faik-BLE-SmartWatch.docx
+
+PERINGATAN: berkas .docx keluaran SUDAH DISUNTING MANUAL di Word (mis. penjelasan
+gambar ditulis ulang, ditambah paragraf nuansa MTU & notify-vs-indicate). Skrip
+ini berisi teks LAMA; menjalankannya ulang akan MENIMPA suntingan tersebut. Karena
+itu skrip menolak menimpa berkas yang sudah ada — pakai --force hanya jika benar
+benar ingin membangun ulang dari nol (suntingan manual akan hilang).
 """
 import os
+import sys
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -216,6 +223,13 @@ body(
     "eksperimen formal."
 )
 
+if os.path.exists(OUT) and "--force" not in sys.argv:
+    raise SystemExit(
+        f"[BATAL] {OUT}\n"
+        f"        sudah ada dan mungkin berisi suntingan manual di Word.\n"
+        f"        Menjalankan ulang akan menimpanya. Bila yakin ingin membangun\n"
+        f"        ulang dari nol: python3 {os.path.relpath(sys.argv[0], ROOT)} --force"
+    )
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 doc.save(OUT)
 print("[OK] tersimpan:", OUT)
