@@ -343,8 +343,120 @@ def fig_watch_arch():
     save(fig, "fig_watch_arch")
 
 
+# ---------- 6. GATT: tabel atribut + jalur komunikasi lengkap ----------
+def fig_gatt():
+    """Diagram komprehensif jalur komunikasi GATT: tabel atribut yang di-host
+    watch (server) di bagian atas, lalu seluruh siklus antara watch (peripheral/
+    server) dan ponsel (central/client) — setup, connect & discover, subscribe
+    (CCCD), transfer notifikasi berbingkai dengan flow-control, dan ACK
+    write-back. Tiap langkah memakai nama callback/API asli dari kode
+    (Android BluetoothGattServer + flutter_blue_plus)."""
+    fig, ax = new_ax(15.5, 27.5)
+    L, R = 6.6, 12.2                 # lifeline server (watch) & client (phone)
+    GX = 3.4                         # gutter nomor langkah
+
+    # ===== judul =====
+    ax.text(8.0, 27.0,
+            "GATT Communication Path —  Watch (Peripheral / Server)  <->  "
+            "Phone (Central / Client)",
+            fontsize=11, fontweight="bold", ha="center", va="center")
+
+    # ===== inset: tabel atribut GATT (di-host watch) =====
+    ax.add_patch(FancyBboxPatch((2.4, 23.0), 9.6, 3.3,
+        boxstyle="round,pad=0.02,rounding_size=0.1", fill=False,
+        edgecolor=BLACK, linewidth=1.0, linestyle=(0, (4, 3)), zorder=1))
+    ax.text(7.2, 26.0, "GATT attribute table (hosted by the Watch / Server)",
+            fontsize=9, fontweight="bold", ha="center", va="center")
+    box(ax, 4.4, 24.6, 3.0, 1.0, "Service 0000a100\n(PRIMARY)", fs=7.6)
+    box(ax, 9.0, 25.25, 4.4, 0.95,
+        "Char 0000a101 — NOTIFY\n(+ CCCD 0x2902 · R/W)", fs=7.4)
+    box(ax, 9.0, 23.85, 4.4, 0.85, "Char 0000a102 — WRITE", fs=7.4)
+    # rail pohon: service -> {RECORD, ACK}
+    line(ax, [(5.9, 24.6), (6.3, 24.6)])
+    line(ax, [(6.3, 23.85), (6.3, 25.25)])
+    line(ax, [(6.3, 25.25), (6.8, 25.25)])
+    line(ax, [(6.3, 23.85), (6.8, 23.85)])
+
+    # ===== header & lifelines =====
+    box(ax, L, 22.2, 3.8, 1.1, "Watch — Peripheral\nGATT Server", fs=9)
+    box(ax, R, 22.2, 3.8, 1.1, "Phone — Central\nGATT Client", fs=9)
+    line(ax, [(L, 1.6), (L, 21.6)])
+    line(ax, [(R, 1.6), (R, 21.6)])
+    small(ax, GX, 21.1, "Step", fs=8.4)
+
+    step = [0]
+
+    def number(y):
+        step[0] += 1
+        num(ax, GX, y, step[0])
+
+    def msg(y, a, b, text, dashed=False, fs=8.0):
+        arrow(ax, a, y, b, y, dashed=dashed)
+        small(ax, (a + b) / 2, y + 0.32, text, fs=fs)
+        number(y)
+
+    def lnote(y, text, fs=7.5):
+        tag(ax, L, y, text, fs=fs)
+        number(y)
+
+    def rnote(y, text, fs=7.5):
+        tag(ax, R, y, text, fs=fs)
+        number(y)
+
+    # ===== siklus komunikasi (atas -> bawah) =====
+    # -- Setup (hanya server) --
+    lnote(20.8, "openGattServer()\n+ addService(A100)")
+    lnote(19.7, "startAdvertising\nADV=A100 · scanRsp=name")
+    # -- Connect & discover (client memulai) --
+    msg(18.5, R, L, "startScan(withServices:[A100]) -> connect()")
+    lnote(17.5, "onConnectionStateChange:\nCONNECTED")
+    msg(16.4, R, L, "requestMtu(512)")
+    lnote(15.5, "onMtuChanged: 23 -> up to 512")
+    msg(14.4, R, L, "discoverServices()")
+    rnote(13.5, "finds A101 / A102 / CCCD")
+    # -- Subscribe (CCCD) --
+    msg(12.4, R, L, "setNotifyValue(true) -> write CCCD = 0x01 0x00", fs=7.6)
+    lnote(11.4, "onDescriptorWriteRequest:\nsubscribers.add(device)")
+    msg(10.4, L, R, "sendResponse(SUCCESS)", dashed=True)
+    # -- Notify (transfer batch, flow-controlled) --
+    lnote(9.3, "sendBatch -> frame queue\n[ START | DATA x n | END ]")
+    msg(8.0, L, R, "notifyCharacteristicChanged(frame)", fs=7.7)
+    rnote(7.2, "onValueReceived ->\nreassemble (_rxBuffer)")
+    lnote(6.4, "onNotificationSent ->\nsend next frame")
+    rnote(5.2, "on END: decode JSON array ->\ninsertReadings (INSERT OR IGNORE)")
+    # -- Acknowledge (write-back) --
+    msg(4.2, R, L, "write ACK char = record count", dashed=True)
+    lnote(3.2, "onCharacteristicWriteRequest:\nmarkSynced = 1")
+    msg(2.2, L, R, "sendResponse(SUCCESS)", dashed=True)
+
+    # ===== UML 'loop' fragment di sekitar transfer per-frame =====
+    lx0, lx1, ly0, ly1 = 4.9, 13.6, 5.85, 8.5
+    ax.add_patch(Polygon([(lx0, ly0), (lx1, ly0), (lx1, ly1), (lx0, ly1)],
+        closed=True, fill=False, edgecolor=BLACK, linewidth=1.0, zorder=1))
+    ax.add_patch(Polygon([(lx0, ly1), (lx0 + 2.0, ly1), (lx0 + 2.0, ly1 - 0.34),
+        (lx0 + 1.7, ly1 - 0.54), (lx0, ly1 - 0.54)], closed=True, fill=True,
+        facecolor=WHITE, edgecolor=BLACK, linewidth=1.0, zorder=6))
+    ax.text(lx0 + 0.95, ly1 - 0.27, "loop [per frame]", fontsize=7.3,
+            fontweight="bold", ha="center", va="center", zorder=7)
+
+    # ===== bracket fase (kiri) =====
+    bracket(ax, 2.2, 21.25, 19.25, "Setup\n(server)", fs=8.5)
+    bracket(ax, 2.2, 18.95, 13.05, "Connect &\ndiscover", fs=8.5)
+    bracket(ax, 2.2, 12.85, 9.95, "Subscribe\n(CCCD)", fs=8.5)
+    bracket(ax, 2.2, 9.75, 4.75, "Notify\n(flow control)", fs=8.5)
+    bracket(ax, 2.2, 4.65, 1.75, "ACK", fs=8.5)
+
+    # ===== catatan kaki & legenda =====
+    small(ax, 7.7, 1.0,
+          "128-bit UUIDs (16-bit aliases A100/A101/A102 on the Bluetooth base "
+          "UUID).  One notification = one frame (opcode 1 B + chunk <= MTU-4).",
+          fs=7.4)
+    legend_flow(ax, 1.0, 0.3, "ACK / response (dashed)")
+    save(fig, "fig_gatt")
+
+
 if __name__ == "__main__":
     print("Membuat diagram (gaya monokrom) ke %s/ ..." % OUT)
     fig_architecture(); fig_sequence(); fig_framing(); fig_storeforward()
-    fig_watch_arch()
+    fig_watch_arch(); fig_gatt()
     print("Selesai.")
