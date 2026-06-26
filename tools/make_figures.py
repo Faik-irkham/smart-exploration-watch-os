@@ -457,8 +457,48 @@ def fig_gatt():
     save(fig, "fig_gatt")
 
 
+# ---------- 7. negosiasi MTU (terima / tolak) ----------
+def fig_mtu():
+    """Flowchart negosiasi MTU: ponsel mengusulkan 512, watch membalas dengan
+    yang ia dukung, dipakai yang terkecil; bila gagal memakai default 23.
+    Hasilnya menentukan ukuran chunk (MTU - 4)."""
+    fig, ax = new_ax(14, 13)
+    XC = 7.0
+
+    terminator(ax, XC, 11.6, 5.4, 1.0, "Ponsel meminta MTU 512", fs=10)
+    arrow(ax, XC, 11.1, XC, 10.3)
+    box(ax, XC, 9.6, 5.8, 1.3,
+        "Watch membalas dengan MTU\nyang ia dukung (negosiasi)", fs=9.3)
+    arrow(ax, XC, 8.95, XC, 8.2)
+    diamond(ax, XC, 7.0, 4.0, 2.3, "Negosiasi\nberhasil?", fs=9.3)
+
+    # cabang Ya -> ambil yang terkecil
+    arrow(ax, XC, 5.85, XC, 5.15)
+    small(ax, XC + 0.3, 5.5, "Ya", ha="left")
+    box(ax, XC, 4.3, 6.8, 1.6,
+        "MTU = nilai terkecil dari\nusulan dan dukungan\n"
+        "(contoh: min(512, 247) = 247)", fs=8.8)
+
+    # cabang Tidak -> default 23
+    arrow(ax, XC - 2.0, 7.0, 3.95, 7.0)
+    small(ax, 4.9, 7.32, "Tidak")
+    box(ax, 2.5, 7.0, 2.9, 1.3, "MTU = 23\n(default)", fs=9.3)
+
+    # konvergensi -> terminator
+    terminator(ax, XC, 1.9, 6.8, 1.0,
+               "Pakai MTU final  ->  chunk = MTU - 4 byte", fs=9.3)
+    arrow(ax, XC, 3.5, XC, 2.4)
+    line(ax, [(2.5, 6.35), (2.5, 1.9)])
+    arrow(ax, 2.5, 1.9, 3.6, 1.9)
+
+    small(ax, XC, 0.5,
+          "Nilai 247 hanya ilustrasi; nilai nyata bergantung kemampuan "
+          "perangkat.", fs=8)
+    save(fig, "fig_mtu")
+
+
 if __name__ == "__main__":
     print("Membuat diagram (gaya monokrom) ke %s/ ..." % OUT)
     fig_architecture(); fig_sequence(); fig_framing(); fig_storeforward()
-    fig_watch_arch(); fig_gatt()
+    fig_watch_arch(); fig_gatt(); fig_mtu()
     print("Selesai.")
