@@ -2,6 +2,8 @@
 /hr_analysis/
 /watch.csv
 /phone.csv
+/watch-*.csv
+/phone-*.csv
 /watch.db
 /phone.db
 /watch.db-*
