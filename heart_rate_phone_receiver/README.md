@@ -11,6 +11,8 @@ dua-aplikasi — lihat [README induk](../README.md) dan
 - Scan service watch (`0000a100…`), connect, dan request MTU 512.
 - Subscribe karakteristik record, **merangkai batch ber-frame** (opcode START/DATA/END).
 - Parse JSON array → simpan satu batch dalam satu transaksi SQLite.
+- Simpan ringkasan accelerometer opsional dari varian fast-flush; payload HR
+  lama tanpa field accelerometer tetap didukung.
 - Tampilkan BPM terbaru, status koneksi, dan riwayat tersimpan.
 
 ## Struktur kode

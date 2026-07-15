@@ -27,10 +27,18 @@ class HistoryList extends StatelessWidget {
         final r = history[i];
         return ListTile(
           dense: true,
-          leading:
-              const Icon(Icons.favorite, color: Colors.redAccent, size: 18),
+          leading: const Icon(
+            Icons.favorite,
+            color: Colors.redAccent,
+            size: 18,
+          ),
           title: Text('${r.bpm.toStringAsFixed(0)} BPM'),
-          subtitle: Text('Akurasi ${r.accuracy} • ${formatDateTime(r.time)}'),
+          subtitle: Text(
+            'Akurasi ${r.accuracy} • ${formatDateTime(r.time)}'
+            '${r.accelMagnitudeStd == null ? '' : ' • gerak σ '
+                      '${r.accelMagnitudeStd!.toStringAsFixed(2)} '
+                      '(${r.accelSampleCount} sampel)'}',
+          ),
         );
       },
     );

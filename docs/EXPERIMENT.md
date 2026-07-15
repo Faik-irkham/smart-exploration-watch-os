@@ -9,6 +9,10 @@ analisis.
 > **konfirmasi penerimaan (ACK)** dan penerima **idempoten** (anti-duplikat),
 > serta eksekusi **latar belakang/layar mati** lewat *foreground service*.
 > Belum mencakup auto-jalan saat aplikasi ditutup/­reboot.
+> **Keterbatasan diketahui:** penandaan `synced = 1` dapat terjadi prematur
+> saat tautan terputus sehingga backlog tidak di-backfill (evaluasi 23–28 Jun
+> 2026: 2.755/2.760 record hilang ber-`synced = 1`; lihat catatan 4 Juli &
+> naskah §3.5).
 
 ---
 
@@ -46,6 +50,7 @@ analisis.
 | **Delivery ratio** | `record cocok di ponsel / record direkam watch` (cocok via `time`) | CSV ekspor (lihat §6) / `tools/analyze.py`. |
 | **Record loss** | `1 − delivery ratio` | idem |
 | **Duplikat** | jumlah `time` ganda di ponsel (harus 0 berkat indeks unik) | `tools/analyze.py`. |
+| **Backfill gap (false-sent)** | record `synced = 1` di watch tanpa padanan `time` di ponsel, dihitung pada **periode pengukuran valid** (cakupan sama dengan delivery ratio, agar terurai: hilang = false-sent + pending) | CSV ekspor / analisis silang (`hr_analysis`). |
 | **Distribusi akurasi** | sebaran nilai `accuracy` sensor (-1..3, konstanta `SensorManager`) sebagai indikator kualitas data | CSV ekspor / `tools/analyze.py`. |
 | **Latensi transfer batch (watch)** | Waktu dari frame pertama sampai frame terakhir (`OP_END`) tuntas terkirim | Log `HR-METRIC` watch, kolom `duration_ms`. |
 | **Throughput** | `payload_bytes / duration` | Log `HR-METRIC` watch, kolom `throughput_Bps`. |
@@ -138,6 +143,12 @@ adb -s <SERIAL_PHONE> exec-out run-as com.flutfy.heart_rate_phone_receiver \
 adb -s <SERIAL_WATCH> logcat -s HR-METRIC:I > watch_metrics.csv   # tx_batch
 adb -s <SERIAL_PHONE> logcat | grep HR-METRIC > phone_metrics.csv  # rx_batch (debug)
 ```
+
+> **Simpan tangkapan mentah ini per sesi** (mis. `watch_metrics_<tanggal>.csv`)
+> sebagai lampiran bukti — jangan hanya menyalin satu baris contoh. Distribusi
+> durasi/throughput antar-batch (rata-rata ± standard deviation) dibutuhkan
+> untuk pelaporan agregat di naskah; pada evaluasi 23–28 Jun 2026 hanya satu
+> baris contoh yang terdokumentasi.
 
 ### 6.4 Struktur CSV ekspor
 `id, bpm, accuracy, time_ms, time_iso` (ditambah `synced` pada sisi watch).

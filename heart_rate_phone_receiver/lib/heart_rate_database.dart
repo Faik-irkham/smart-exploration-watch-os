@@ -27,14 +27,17 @@ class HeartRateDatabase {
     final path = p.join(dir, _dbName);
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             bpm REAL NOT NULL,
             accuracy INTEGER NOT NULL,
-            time INTEGER NOT NULL
+            time INTEGER NOT NULL,
+            accel_magnitude_mean REAL,
+            accel_magnitude_std REAL,
+            accel_sample_count INTEGER NOT NULL DEFAULT 0
           )
         ''');
         // Indeks unik pada time mencegah duplikat saat watch mengirim ulang
@@ -56,6 +59,18 @@ class HeartRateDatabase {
             'ON $_table(time)',
           );
         }
+        if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE $_table ADD COLUMN accel_magnitude_mean REAL',
+          );
+          await db.execute(
+            'ALTER TABLE $_table ADD COLUMN accel_magnitude_std REAL',
+          );
+          await db.execute(
+            'ALTER TABLE $_table ADD COLUMN accel_sample_count INTEGER '
+            'NOT NULL DEFAULT 0',
+          );
+        }
       },
     );
     return _db!;
@@ -74,6 +89,9 @@ class HeartRateDatabase {
       bpm: reading.bpm,
       accuracy: reading.accuracy,
       time: reading.time,
+      accelMagnitudeMean: reading.accelMagnitudeMean,
+      accelMagnitudeStd: reading.accelMagnitudeStd,
+      accelSampleCount: reading.accelSampleCount,
     );
   }
 
@@ -111,13 +129,18 @@ class HeartRateDatabase {
   Future<String> toCsv() async {
     final db = await database;
     final rows = await db.query(_table, orderBy: 'time ASC');
-    final buffer = StringBuffer('id,bpm,accuracy,time_ms,time_iso\n');
+    final buffer = StringBuffer(
+      'id,bpm,accuracy,time_ms,time_iso,'
+      'accel_magnitude_mean,accel_magnitude_std,accel_sample_count\n',
+    );
     for (final r in rows) {
       final reading = HeartRateReading.fromMap(r);
       buffer.writeln(
         '${reading.id},${reading.bpm},${reading.accuracy},'
         '${reading.time.millisecondsSinceEpoch},'
-        '${reading.time.toIso8601String()}',
+        '${reading.time.toIso8601String()},'
+        '${reading.accelMagnitudeMean ?? ''},'
+        '${reading.accelMagnitudeStd ?? ''},${reading.accelSampleCount}',
       );
     }
     return buffer.toString();

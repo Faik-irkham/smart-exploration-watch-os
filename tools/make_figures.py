@@ -497,8 +497,164 @@ def fig_mtu():
     save(fig, "fig_mtu")
 
 
+# ---------- 8. asal-usul timestamp (native -> Dart -> SQLite) ----------
+def fig_timestamp():
+    """Dari mana kolom `time` di database berasal. Native hanya mengirim
+    {bpm, accuracy} lewat EventChannel; timestamp TIDAK ikut dari sensor.
+    Waktu dibuat di sisi Dart saat record disimpan (DateTime.now() di dalam
+    _onTick yang berjalan tiap 1 s), lalu disimpan sebagai epoch milliseconds.
+    Bracket kanan menegaskan dua zona: aliran sensor (belum ber-waktu) vs
+    penyimpanan per 1 s (waktu = saat simpan)."""
+    fig, ax = new_ax(15, 21)
+    XC = 6.6
+    GX = 1.7                          # gutter nomor langkah
+
+    y_sensor = 19.4
+    y_native = 17.3
+    y_bound = 15.9
+    y_dart = 13.9
+    y_timer = 11.4
+    y_make = 8.6
+    y_map = 5.9
+    y_sql = 3.7
+
+    step = [0]
+
+    def number(y):
+        step[0] += 1
+        num(ax, GX, y, step[0])
+
+    small(ax, GX, 20.2, "Step", fs=8.5)
+
+    # 1. sensor (native)
+    terminator(ax, XC, y_sensor, 6.2, 1.0,
+               "HR Sensor (TYPE_HEART_RATE)\nonSensorChanged()", fs=8.8)
+    number(y_sensor)
+
+    # 2. native emit -> hanya bpm + accuracy (TANPA waktu)
+    box(ax, XC, y_native, 6.4, 1.5,
+        "Native -> EventChannel\nsuccess({ bpm, accuracy })", fs=9)
+    number(y_native)
+    tag(ax, 12.1, y_native, "belum ada\nwaktu", fs=7.6)
+    arrow(ax, XC, y_sensor - 0.5, XC, y_native + 0.75)
+
+    # boundary platform-channel
+    line(ax, [(1.2, y_bound), (13.8, y_bound)], lw=1.6)
+    small(ax, XC, y_bound + 0.33, "Platform-channel boundary (EventChannel)",
+          fs=8.4)
+    arrow(ax, XC, y_native - 0.75, XC, y_bound + 0.02)
+
+    # 3. Dart listener -> simpan ke state (masih tanpa waktu)
+    box(ax, XC, y_dart, 6.4, 1.9,
+        "Dart stream listener\nsimpan ke state:\nlatestBpm, latestAccuracy", fs=8.8)
+    number(y_dart)
+    tag(ax, 12.1, y_dart, "masih tanpa\nwaktu", fs=7.6)
+    arrow(ax, XC, y_bound - 0.02, XC, y_dart + 0.95)
+
+    # 4. timer 1 s -> _onTick
+    box(ax, XC, y_timer, 6.8, 1.5,
+        "Timer.periodic(1 s) -> _onTick()\nif (latestBpm > 0)", fs=8.8)
+    number(y_timer)
+    arrow(ax, XC, y_dart - 0.95, XC, y_timer + 0.75)
+
+    # 5. HeartRateReading(... time: DateTime.now())  <-- TITIK KUNCI
+    hw, hh = 7.2, 2.5
+    ax.add_patch(FancyBboxPatch(
+        (XC - hw / 2 - 0.18, y_make - hh / 2 - 0.18), hw + 0.36, hh + 0.36,
+        boxstyle="round,pad=0.02,rounding_size=0.06", fill=False,
+        edgecolor=BLACK, linewidth=1.1, linestyle=(0, (4, 3)), zorder=3))
+    box(ax, XC, y_make, hw, hh,
+        "HeartRateReading(\n  bpm, accuracy,\n  time: DateTime.now()  <==\n)\n"
+        "[ TIMESTAMP DIBUAT DI SINI ]", fs=8.4)
+    number(y_make)
+    arrow(ax, XC, y_timer - 0.75, XC, y_make + hh / 2 + 0.18)
+
+    # 6. toMap -> epoch milliseconds
+    box(ax, XC, y_map, 6.6, 1.5,
+        "toMap(): time ->\ntime.millisecondsSinceEpoch", fs=8.8)
+    number(y_map)
+    arrow(ax, XC, y_make - hh / 2 - 0.18, XC, y_map + 0.75)
+
+    # 7. SQLite
+    terminator(ax, XC, y_sql, 6.8, 1.3,
+               "SQLite readings\n(bpm, accuracy, time, synced)", fs=8.8)
+    number(y_sql)
+    arrow(ax, XC, y_map - 0.75, XC, y_sql + 0.65)
+
+    # bracket dua zona (kanan)
+    bracket(ax, 10.9, y_sensor + 0.5, y_dart - 0.95,
+            "Aliran sensor\n(belum ber-waktu)", side="right", fs=8.2)
+    bracket(ax, 10.9, y_timer + 0.75, y_sql - 0.65,
+            "Simpan tiap 1 s\n(waktu = saat simpan)", side="right", fs=8.2)
+
+    # catatan kaki
+    small(ax, 7.5, 1.6,
+          "Native hanya mengirim bpm & accuracy; timestamp dibuat di sisi Dart "
+          "saat record disimpan (DateTime.now()), bukan dari sensor.", fs=7.8)
+    small(ax, 7.5, 1.0,
+          "Timer 1 s men-sampling nilai terbaru: bila sensor tak mengeluarkan "
+          "nilai baru, satu bpm bisa tersimpan berulang dengan waktu berbeda.",
+          fs=7.8)
+    save(fig, "fig_timestamp")
+
+
+# ---------- 9. ukuran data & pengaruh MTU (record -> batch -> frame) ----------
+def fig_batch_mtu():
+    """Ukuran data yang dikirim dan peran MTU. Baris atas: 1 record JSON
+    (±47 byte) dikali 228 menjadi 1 batch (10.717 byte). Batch dipotong per
+    chunk = MTU-4, lalu dua lajur membandingkan hasil pemotongan pada MTU 512
+    (24 frame, terukur ±0,32 s) vs MTU 23 (567 frame). Catatan bawah menegaskan
+    isi yang sampai sama lengkap — MTU hanya mengubah jumlah frame/kecepatan."""
+    fig, ax = new_ax(17, 12)
+
+    # --- baris atas: record -> batch ---
+    yt = 10.6
+    box(ax, 3.2, yt, 4.0, 1.5, "1 record (JSON)\n±47 byte", fs=9.5)
+    small(ax, 3.2, yt - 1.15, '{"bpm":76.0,"accuracy":3,"time":...}', fs=7.6)
+    arrow(ax, 5.3, yt, 8.0, yt)
+    small(ax, 6.65, yt + 0.35, "x 228 record", fs=8.6)
+    box(ax, 10.6, yt, 5.0, 1.5, "1 batch (kumpulan)\n228 record = 10.717 byte", fs=9.5)
+
+    # --- turun: dipotong per chunk = MTU - 4 ---
+    arrow(ax, 10.6, yt - 0.75, 10.6, 8.55)
+    tag(ax, 10.6, 8.05, "dipotong menjadi frame\nchunk = MTU - 4 byte", fs=8.2)
+    # rel siku di kiri agar cabang tidak memotong kotak frame
+    line(ax, [(10.6, 7.55), (10.6, 7.38), (0.75, 7.38), (0.75, 4.35)])
+    arrow(ax, 0.75, 6.65, 1.3, 6.65, lw=1.2)   # ke lajur MTU 512
+    arrow(ax, 0.75, 4.35, 1.3, 4.35, lw=1.2)   # ke lajur MTU 23
+
+    def strip(y, label, frames, bw, bh, note, fs_box):
+        small(ax, 2.45, y, label, fs=8.8)
+        x = 3.9
+        for t in frames:
+            if t == "...":
+                small(ax, x + 0.35, y, "...", fs=10); x += 1.0; continue
+            if t in ("START", "END"):
+                terminator(ax, x + bw / 2, y, bw, bh, t, fs=fs_box)
+            else:
+                box(ax, x + bw / 2, y, bw, bh, t, fs=fs_box)
+            x += bw + 0.22
+        small(ax, x + 0.25, y, note, ha="left", fs=8.8)
+
+    # --- lajur MTU 512: potongan besar, frame sedikit ---
+    strip(6.65, "MTU 512\n(chunk 508 B)",
+          ["START", "DATA 1", "DATA 2", "...", "DATA 22", "END"],
+          1.75, 1.05, "= 24 frame\nterukur +-0,32 s", 7.8)
+    # --- lajur MTU 23: potongan kecil, frame banyak ---
+    strip(4.35, "MTU 23\n(chunk 19 B)",
+          ["START", "D1", "D2", "D3", "D4", "D5", "D6", "...", "D565", "END"],
+          0.95, 0.85, "= 567 frame\n(~24x lebih banyak)", 6.8)
+
+    # --- catatan bawah ---
+    tag(ax, 8.5, 2.3,
+        "Isi yang sampai sama-sama lengkap (228 record utuh).\n"
+        "MTU hanya mengubah jumlah frame dan kecepatan, bukan kelengkapan.",
+        fs=9.0)
+    save(fig, "fig_batch_mtu")
+
+
 if __name__ == "__main__":
     print("Membuat diagram (gaya monokrom) ke %s/ ..." % OUT)
     fig_architecture(); fig_sequence(); fig_framing(); fig_storeforward()
-    fig_watch_arch(); fig_gatt(); fig_mtu()
+    fig_watch_arch(); fig_gatt(); fig_mtu(); fig_timestamp(); fig_batch_mtu()
     print("Selesai.")

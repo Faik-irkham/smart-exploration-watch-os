@@ -28,13 +28,14 @@ class BleReceiver {
   static const _serviceChannel = MethodChannel('hr_receiver/service');
 
   // Harus identik dengan UUID di MainActivity.kt pada project watch.
-  static final Guid recordServiceUuid =
-      Guid('0000a100-0000-1000-8000-00805f9b34fb');
-  static final Guid recordCharUuid =
-      Guid('0000a101-0000-1000-8000-00805f9b34fb');
+  static final Guid recordServiceUuid = Guid(
+    '0000a100-0000-1000-8000-00805f9b34fb',
+  );
+  static final Guid recordCharUuid = Guid(
+    '0000a101-0000-1000-8000-00805f9b34fb',
+  );
   // Karakteristik ACK: phone menulis konfirmasi setelah menyimpan batch.
-  static final Guid ackCharUuid =
-      Guid('0000a102-0000-1000-8000-00805f9b34fb');
+  static final Guid ackCharUuid = Guid('0000a102-0000-1000-8000-00805f9b34fb');
 
   // Opcode pada byte pertama tiap notifikasi (sama dengan watch).
   static const _opStart = 0x01;
@@ -51,8 +52,9 @@ class BleReceiver {
   final _db = HeartRateDatabase.instance;
 
   /// Status koneksi terkini untuk indikator UI.
-  final ValueNotifier<ReceiverStatus> status =
-      ValueNotifier(ReceiverStatus.idle);
+  final ValueNotifier<ReceiverStatus> status = ValueNotifier(
+    ReceiverStatus.idle,
+  );
 
   /// Pesan tambahan (nama/alamat perangkat atau pesan error).
   final ValueNotifier<String?> message = ValueNotifier(null);
@@ -181,9 +183,10 @@ class BleReceiver {
 
   Future<void> _connect(BluetoothDevice device) async {
     _device = device;
-    _setStatus(ReceiverStatus.connecting, device.platformName.isEmpty
-        ? device.remoteId.str
-        : device.platformName);
+    _setStatus(
+      ReceiverStatus.connecting,
+      device.platformName.isEmpty ? device.remoteId.str : device.platformName,
+    );
 
     _connStateSub?.cancel();
     _connStateSub = device.connectionState.listen((state) {
@@ -235,9 +238,10 @@ class BleReceiver {
       onError: (Object e) => _setError(e.toString()),
     );
 
-    _setStatus(ReceiverStatus.connected, device.platformName.isEmpty
-        ? device.remoteId.str
-        : device.platformName);
+    _setStatus(
+      ReceiverStatus.connected,
+      device.platformName.isEmpty ? device.remoteId.str : device.platformName,
+    );
   }
 
   /// Tangani satu notifikasi BLE. Watch mengirim batch ber-frame: byte pertama
@@ -298,6 +302,10 @@ class BleReceiver {
                 (map['time'] as num?)?.toInt() ??
                     DateTime.now().millisecondsSinceEpoch,
               ),
+              accelMagnitudeMean: (map['accelMagnitudeMean'] as num?)
+                  ?.toDouble(),
+              accelMagnitudeStd: (map['accelMagnitudeStd'] as num?)?.toDouble(),
+              accelSampleCount: (map['accelSampleCount'] as num?)?.toInt() ?? 0,
             );
           }(),
       ];

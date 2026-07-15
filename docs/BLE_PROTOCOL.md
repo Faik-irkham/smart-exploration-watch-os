@@ -97,12 +97,22 @@ mengirim frame berikutnya (antrean `sendQueue`). Ini mencegah frame hilang
 akibat buffer BLE penuh. Jika perangkat terputus di tengah pengiriman, antrean
 dibersihkan dan MTU di-reset ke 23.
 
-## 7. Store-and-forward (jaminan tidak kehilangan data)
+## 7. Store-and-forward (desain jaminan kelengkapan)
 
 - Setiap record di watch disimpan ke SQLite dengan kolom `synced = 0`.
 - Tiap interval (mis. 3 atau 5 menit), watch mengambil semua record `synced = 0`, mengirimnya sebagai satu batch.
 - Record ditandai `synced = 1` **hanya** bila native melaporkan batch diterima (ada subscriber terhubung).
-- Jika phone sedang terputus, record tetap `synced = 0` dan akan dikirim pada interval berikutnya. Tidak ada data yang hilang akibat koneksi terputus sementara.
+- Jika phone sedang terputus, record seharusnya tetap `synced = 0` dan dikirim
+  ulang pada interval berikutnya (desain — lihat keterbatasan di bawah).
+
+> **Keterbatasan yang diketahui (temuan empiris 23–28 Jun 2026):** pada
+> praktiknya penandaan `synced = 1` masih dapat terjadi ketika tautan sedang
+> terputus, sehingga backlog tidak selalu dikirim ulang setelah tautan pulih.
+> Pada periode pengukuran valid, 2.755 dari 2.760 record yang hilang (99,8%)
+> berstatus `synced = 1` — termasuk seluruh record satu sesi yang phone-nya
+> tidak pernah terhubung. Perbaikan yang direncanakan: tunda `synced = 1`
+> sampai ACK benar-benar diterima + pemicu backfill saat rekoneksi. Rincian:
+> catatan 4 Juli 2026 dan naskah §3.5.
 
 > Catatan reproduksibilitas: idealnya jumlah record `bpm/time` di SQLite watch
 > dan di SQLite phone identik setelah sesi selesai dan semua batch terkirim.
