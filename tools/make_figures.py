@@ -87,10 +87,11 @@ def bracket(ax, x, y_top, y_bot, label, side="left", fs=10):
             va="center", fontsize=fs, fontweight="bold", color=BLACK)
 
 
-def new_ax(xlim, ylim, scale=0.62):
-    fig, ax = plt.subplots(figsize=(xlim * scale, ylim * scale), dpi=300)
+def new_ax(xlim, ylim, scale=0.62, landscape=False):
+    figsize = (11.7, 7.2) if landscape else (xlim * scale, ylim * scale)
+    fig, ax = plt.subplots(figsize=figsize, dpi=300)
     ax.set_xlim(0, xlim); ax.set_ylim(0, ylim)
-    ax.set_aspect("equal"); ax.axis("off")
+    ax.set_aspect("auto" if landscape else "equal"); ax.axis("off")
     fig.patch.set_facecolor(WHITE)
     return fig, ax
 
@@ -114,7 +115,7 @@ def save(fig, name):
 
 # ---------- 1. arsitektur (dua kolom, alur-U bernomor 1..10) ----------
 def fig_architecture():
-    fig, ax = new_ax(13, 16.5)
+    fig, ax = new_ax(13, 16.5, landscape=True)
     xW, xP = 3.6, 9.4
     w, h = 3.2, 1.5
     R = [13.4, 11.1, 8.8, 6.5, 4.2]   # baris (atas -> bawah)
@@ -167,7 +168,7 @@ def fig_architecture():
 
 # ---------- 2. sequence (bracket fase + nomor langkah) ----------
 def fig_sequence():
-    fig, ax = new_ax(15.5, 18)
+    fig, ax = new_ax(15.5, 18, landscape=True)
     L, R = 6.2, 12.2
     GX = 3.8                          # gutter nomor langkah
     box(ax, L, 16.8, 3.4, 0.9, "Watch (Peripheral)", fs=10)
@@ -249,7 +250,7 @@ def fig_framing():
 
 # ---------- 4. store-and-forward (bracket dua skala waktu) ----------
 def fig_storeforward():
-    fig, ax = new_ax(13, 21)
+    fig, ax = new_ax(13, 21, landscape=True)
     XC, W, H = 6.6, 6.0, 1.3
     XL = 1.9                       # lajur loop kiri
     XBR = 10.6                     # bracket kanan
@@ -287,7 +288,7 @@ def fig_storeforward():
 
 # ---------- 5. arsitektur internal WATCH (Flutter <-> Native) ----------
 def fig_watch_arch():
-    fig, ax = new_ax(16.5, 17)
+    fig, ax = new_ax(16.5, 17, landscape=True)
 
     # region Flutter (atas) & Native (bawah)
     ax.add_patch(FancyBboxPatch((0.6, 10.0), 12.6, 6.3,
@@ -351,7 +352,7 @@ def fig_gatt():
     (CCCD), transfer notifikasi berbingkai dengan flow-control, dan ACK
     write-back. Tiap langkah memakai nama callback/API asli dari kode
     (Android BluetoothGattServer + flutter_blue_plus)."""
-    fig, ax = new_ax(15.5, 27.5)
+    fig, ax = new_ax(15.5, 27.5, landscape=True)
     L, R = 6.6, 12.2                 # lifeline server (watch) & client (phone)
     GX = 3.4                         # gutter nomor langkah
 
@@ -465,35 +466,35 @@ def fig_mtu():
     fig, ax = new_ax(14, 13)
     XC = 7.0
 
-    terminator(ax, XC, 11.6, 5.4, 1.0, "Ponsel meminta MTU 512", fs=10)
+    terminator(ax, XC, 11.6, 5.4, 1.0, "Phone requests MTU 512", fs=10)
     arrow(ax, XC, 11.1, XC, 10.3)
     box(ax, XC, 9.6, 5.8, 1.3,
-        "Watch membalas dengan MTU\nyang ia dukung (negosiasi)", fs=9.3)
+        "Watch replies with its\nsupported MTU (negotiation)", fs=9.3)
     arrow(ax, XC, 8.95, XC, 8.2)
-    diamond(ax, XC, 7.0, 4.0, 2.3, "Negosiasi\nberhasil?", fs=9.3)
+    diamond(ax, XC, 7.0, 4.0, 2.3, "Negotiation\nsuccessful?", fs=9.3)
 
     # cabang Ya -> ambil yang terkecil
     arrow(ax, XC, 5.85, XC, 5.15)
-    small(ax, XC + 0.3, 5.5, "Ya", ha="left")
+    small(ax, XC + 0.3, 5.5, "Yes", ha="left")
     box(ax, XC, 4.3, 6.8, 1.6,
-        "MTU = nilai terkecil dari\nusulan dan dukungan\n"
-        "(contoh: min(512, 247) = 247)", fs=8.8)
+        "MTU = smaller of the requested\nand supported values\n"
+        "(example: min(512, 247) = 247)", fs=8.8)
 
     # cabang Tidak -> default 23
     arrow(ax, XC - 2.0, 7.0, 3.95, 7.0)
-    small(ax, 4.9, 7.32, "Tidak")
+    small(ax, 4.9, 7.32, "No")
     box(ax, 2.5, 7.0, 2.9, 1.3, "MTU = 23\n(default)", fs=9.3)
 
     # konvergensi -> terminator
     terminator(ax, XC, 1.9, 6.8, 1.0,
-               "Pakai MTU final  ->  chunk = MTU - 4 byte", fs=9.3)
+               "Use final MTU  ->  chunk = MTU - 4 bytes", fs=9.3)
     arrow(ax, XC, 3.5, XC, 2.4)
     line(ax, [(2.5, 6.35), (2.5, 1.9)])
     arrow(ax, 2.5, 1.9, 3.6, 1.9)
 
     small(ax, XC, 0.5,
-          "Nilai 247 hanya ilustrasi; nilai nyata bergantung kemampuan "
-          "perangkat.", fs=8)
+          "The value 247 is illustrative; the actual value depends on device "
+          "capabilities.", fs=8)
     save(fig, "fig_mtu")
 
 
@@ -505,7 +506,7 @@ def fig_timestamp():
     _onTick yang berjalan tiap 1 s), lalu disimpan sebagai epoch milliseconds.
     Bracket kanan menegaskan dua zona: aliran sensor (belum ber-waktu) vs
     penyimpanan per 1 s (waktu = saat simpan)."""
-    fig, ax = new_ax(15, 21)
+    fig, ax = new_ax(15, 21, landscape=True)
     XC = 6.6
     GX = 1.7                          # gutter nomor langkah
 
@@ -535,7 +536,7 @@ def fig_timestamp():
     box(ax, XC, y_native, 6.4, 1.5,
         "Native -> EventChannel\nsuccess({ bpm, accuracy })", fs=9)
     number(y_native)
-    tag(ax, 12.1, y_native, "belum ada\nwaktu", fs=7.6)
+    tag(ax, 12.1, y_native, "no timestamp\nyet", fs=7.6)
     arrow(ax, XC, y_sensor - 0.5, XC, y_native + 0.75)
 
     # boundary platform-channel
@@ -546,9 +547,9 @@ def fig_timestamp():
 
     # 3. Dart listener -> simpan ke state (masih tanpa waktu)
     box(ax, XC, y_dart, 6.4, 1.9,
-        "Dart stream listener\nsimpan ke state:\nlatestBpm, latestAccuracy", fs=8.8)
+        "Dart stream listener\nstores in state:\nlatestBpm, latestAccuracy", fs=8.8)
     number(y_dart)
-    tag(ax, 12.1, y_dart, "masih tanpa\nwaktu", fs=7.6)
+    tag(ax, 12.1, y_dart, "still no\ntimestamp", fs=7.6)
     arrow(ax, XC, y_bound - 0.02, XC, y_dart + 0.95)
 
     # 4. timer 1 s -> _onTick
@@ -565,7 +566,7 @@ def fig_timestamp():
         edgecolor=BLACK, linewidth=1.1, linestyle=(0, (4, 3)), zorder=3))
     box(ax, XC, y_make, hw, hh,
         "HeartRateReading(\n  bpm, accuracy,\n  time: DateTime.now()  <==\n)\n"
-        "[ TIMESTAMP DIBUAT DI SINI ]", fs=8.4)
+        "[ TIMESTAMP CREATED HERE ]", fs=8.4)
     number(y_make)
     arrow(ax, XC, y_timer - 0.75, XC, y_make + hh / 2 + 0.18)
 
@@ -583,17 +584,17 @@ def fig_timestamp():
 
     # bracket dua zona (kanan)
     bracket(ax, 10.9, y_sensor + 0.5, y_dart - 0.95,
-            "Aliran sensor\n(belum ber-waktu)", side="right", fs=8.2)
+            "Sensor stream\n(not timestamped)", side="right", fs=8.2)
     bracket(ax, 10.9, y_timer + 0.75, y_sql - 0.65,
-            "Simpan tiap 1 s\n(waktu = saat simpan)", side="right", fs=8.2)
+            "Store every 1 s\n(time = storage time)", side="right", fs=8.2)
 
     # catatan kaki
     small(ax, 7.5, 1.6,
-          "Native hanya mengirim bpm & accuracy; timestamp dibuat di sisi Dart "
-          "saat record disimpan (DateTime.now()), bukan dari sensor.", fs=7.8)
+          "Native sends only bpm & accuracy; Dart creates the timestamp when "
+          "the record is stored (DateTime.now()), not at the sensor.", fs=7.8)
     small(ax, 7.5, 1.0,
-          "Timer 1 s men-sampling nilai terbaru: bila sensor tak mengeluarkan "
-          "nilai baru, satu bpm bisa tersimpan berulang dengan waktu berbeda.",
+          "The 1 s timer samples the latest value: if the sensor emits no new "
+          "value, one bpm may be stored repeatedly with different timestamps.",
           fs=7.8)
     save(fig, "fig_timestamp")
 
@@ -613,11 +614,11 @@ def fig_batch_mtu():
     small(ax, 3.2, yt - 1.15, '{"bpm":76.0,"accuracy":3,"time":...}', fs=7.6)
     arrow(ax, 5.3, yt, 8.0, yt)
     small(ax, 6.65, yt + 0.35, "x 228 record", fs=8.6)
-    box(ax, 10.6, yt, 5.0, 1.5, "1 batch (kumpulan)\n228 record = 10.717 byte", fs=9.5)
+    box(ax, 10.6, yt, 5.0, 1.5, "1 batch (collection)\n228 records = 10,717 bytes", fs=9.5)
 
     # --- turun: dipotong per chunk = MTU - 4 ---
     arrow(ax, 10.6, yt - 0.75, 10.6, 8.55)
-    tag(ax, 10.6, 8.05, "dipotong menjadi frame\nchunk = MTU - 4 byte", fs=8.2)
+    tag(ax, 10.6, 8.05, "split into frames\nchunk = MTU - 4 bytes", fs=8.2)
     # rel siku di kiri agar cabang tidak memotong kotak frame
     line(ax, [(10.6, 7.55), (10.6, 7.38), (0.75, 7.38), (0.75, 4.35)])
     arrow(ax, 0.75, 6.65, 1.3, 6.65, lw=1.2)   # ke lajur MTU 512
@@ -639,18 +640,427 @@ def fig_batch_mtu():
     # --- lajur MTU 512: potongan besar, frame sedikit ---
     strip(6.65, "MTU 512\n(chunk 508 B)",
           ["START", "DATA 1", "DATA 2", "...", "DATA 22", "END"],
-          1.75, 1.05, "= 24 frame\nterukur +-0,32 s", 7.8)
+          1.75, 1.05, "= 24 frames\nmeasured +-0.32 s", 7.8)
     # --- lajur MTU 23: potongan kecil, frame banyak ---
     strip(4.35, "MTU 23\n(chunk 19 B)",
           ["START", "D1", "D2", "D3", "D4", "D5", "D6", "...", "D565", "END"],
-          0.95, 0.85, "= 567 frame\n(~24x lebih banyak)", 6.8)
+          0.95, 0.85, "= 567 frames\n(~24x more)", 6.8)
 
     # --- catatan bawah ---
     tag(ax, 8.5, 2.3,
-        "Isi yang sampai sama-sama lengkap (228 record utuh).\n"
-        "MTU hanya mengubah jumlah frame dan kecepatan, bukan kelengkapan.",
+        "The received content is equally complete (228 full records).\n"
+        "MTU changes only frame count and speed, not completeness.",
         fs=9.0)
     save(fig, "fig_batch_mtu")
+
+
+def fig_hr_contact():
+    """Sensor-contact distribution with identical solid chart/legend colors."""
+    values = [21087, 15, 2113]
+    colors = ["#16A34A", "#D97706", "#64748B"]
+    labels = [
+        "Accurate (3) · 21,087 (90.8%)",
+        "Medium (0) · 15 (0.1%)",
+        "Inaccurate (-1) · 2,113 (9.1%)",
+    ]
+
+    fig, ax = plt.subplots(figsize=(9.0, 5.4), dpi=300)
+    fig.patch.set_facecolor(WHITE)
+    ax.set_facecolor(WHITE)
+    wedges, _ = ax.pie(
+        values,
+        colors=colors,
+        startangle=90,
+        counterclock=False,
+        # The medium category is only 0.1%; a very thin separator keeps its
+        # true-size amber wedge visible instead of covering it with white.
+        wedgeprops=dict(width=0.40, edgecolor=WHITE, linewidth=0.15),
+    )
+    ax.text(0, 0.15, "91%", ha="center", va="center",
+            fontsize=26, fontweight="bold", color=colors[0])
+    ax.text(0, -0.20, "accurate contact", ha="center", va="center",
+            fontsize=12, color=colors[2])
+    ax.legend(
+        wedges,
+        labels,
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
+        frameon=False,
+        fontsize=11,
+        handlelength=1.6,
+        handletextpad=0.8,
+    )
+    ax.set_aspect("equal")
+    fig.subplots_adjust(left=0.04, right=0.78, top=0.96, bottom=0.04)
+    os.makedirs(OUT, exist_ok=True)
+    fig.savefig(os.path.join(OUT, "fig_hr_contact.png"), dpi=300,
+                facecolor=WHITE, bbox_inches="tight")
+    plt.close(fig)
+    print("[OK] saved: fig_hr_contact")
+
+
+# ---------- Native landscape layouts ----------
+# These functions intentionally redefine the earlier portrait implementations.
+# The content is reflowed into rows/columns designed for a landscape canvas;
+# no coordinate stretching is used.
+def landscape_ax(xlim=24, ylim=13):
+    fig, ax = plt.subplots(figsize=(12, 6.5), dpi=300)
+    ax.set_xlim(0, xlim); ax.set_ylim(0, ylim)
+    ax.set_aspect("equal"); ax.axis("off")
+    fig.patch.set_facecolor(WHITE)
+    return fig, ax
+
+
+def fig_architecture():
+    fig, ax = landscape_ax()
+    xs = [2.6, 6.9, 11.2, 15.5, 19.8]
+    w, h = 3.35, 1.65
+    watch = ["HR Sensor\n(TYPE_HEART_RATE)", "Native\n(EventChannel)",
+             "Flutter UI\n+ BLoC", "SQLite\n(synced flag)",
+             "BLE Advertiser\n+ GATT"]
+    phone = ["BLE Central\n(flutter_blue_plus)", "Reassembly\n(START/DATA/END)",
+             "SQLite\n(deduplicated)", "BLoC + UI", "Export\nCSV / .db"]
+
+    ax.text(11.2, 12.25, "END-TO-END SMARTWATCH DATA ARCHITECTURE",
+            fontsize=13, fontweight="bold", ha="center")
+    for y, title in [(9.25, "SMARTWATCH (Wear OS) — Peripheral / GATT Server"),
+                     (4.45, "SMARTPHONE (Android) — Central / GATT Client")]:
+        ax.add_patch(FancyBboxPatch((0.45, y - 1.35), 21.5, 2.95,
+            boxstyle="round,pad=0.02,rounding_size=0.1", fill=False,
+            edgecolor=BLACK, linewidth=1.0, linestyle=(0, (4, 3))))
+        ax.text(0.75, y + 1.25, title, fontsize=10, fontweight="bold",
+                ha="left", va="center")
+
+    for i, (x, text) in enumerate(zip(xs, watch)):
+        box(ax, x, 9.15, w, h, text, fs=8.2)
+        num(ax, x - w / 2 + 0.12, 9.15 + h / 2 - 0.12, i + 1, r=0.28)
+        if i:
+            arrow(ax, xs[i - 1] + w / 2, 9.15, x - w / 2, 9.15)
+
+    # Phone data continues from right to left, yielding a clean serpentine path.
+    for j, (x, text) in enumerate(zip(reversed(xs), phone)):
+        box(ax, x, 4.35, w, h, text, fs=8.2)
+        num(ax, x - w / 2 + 0.12, 4.35 + h / 2 - 0.12, j + 6, r=0.28)
+        if j:
+            arrow(ax, list(reversed(xs))[j - 1] - w / 2, 4.35,
+                  x + w / 2, 4.35)
+
+    arrow(ax, xs[-1], 8.32, xs[-1], 5.18)
+    small(ax, xs[-1] + 0.45, 6.95, "Batch (NOTIFY)", ha="left", fs=8.2)
+    arrow(ax, xs[-1] - 0.55, 5.18, xs[-1] - 0.55, 8.32, dashed=True)
+    small(ax, xs[-1] - 0.95, 6.2, "ACK (WRITE)", ha="right", fs=8.2)
+    legend_flow(ax, 5.2, 1.25, "ACK (dashed)")
+    save(fig, "fig_architecture")
+
+
+def fig_sequence():
+    fig, ax = landscape_ax()
+    ax.text(12, 12.2, "BATCH TRANSFER SEQUENCE", fontsize=13,
+            fontweight="bold", ha="center")
+    y_watch, y_phone = 8.65, 4.25
+    box(ax, 1.9, y_watch, 3.0, 1.0, "Watch\n(Peripheral)", fs=8.5)
+    box(ax, 1.9, y_phone, 3.0, 1.0, "Phone\n(Central)", fs=8.5)
+    line(ax, [(3.7, y_watch), (23, y_watch)])
+    line(ax, [(3.7, y_phone), (23, y_phone)])
+
+    phases = [
+        ("CONNECTION SETUP", 4.3, 9.0, [
+            ("note", "advertise\nA100"), ("up", "scan + connect"),
+            ("up", "request MTU"), ("up", "subscribe / CCCD")]),
+        ("BATCH TRANSFER", 9.4, 17.0, [
+            ("down", "START"), ("down", "DATA × n"), ("down", "END"),
+            ("note2", "store SQLite")]),
+        ("PERSIST & ACK", 17.4, 22.8, [
+            ("updash", "ACK count"), ("note", "mark synced")])
+    ]
+    step = 1
+    for title, x0, x1, events in phases:
+        ax.add_patch(FancyBboxPatch((x0, 2.55), x1 - x0, 7.85,
+            boxstyle="round,pad=0.02,rounding_size=0.08", fill=False,
+            edgecolor="#555555", linewidth=0.9, linestyle=(0, (4, 3))))
+        ax.text((x0 + x1) / 2, 10.72, title, fontsize=8.5,
+                fontweight="bold", ha="center")
+        exs = [x0 + (i + 1) * (x1 - x0) / (len(events) + 1)
+               for i in range(len(events))]
+        for event_i, (x, (kind, label)) in enumerate(zip(exs, events)):
+            num(ax, x, 11.35, step, r=0.25); step += 1
+            if kind == "down":
+                arrow(ax, x, y_watch - 0.12, x, y_phone + 0.12)
+                ax.text(x + 0.28, 6.45, label, rotation=90, fontsize=7.0,
+                        fontweight="bold", ha="center", va="center")
+            elif kind in ("up", "updash"):
+                arrow(ax, x, y_phone + 0.12, x, y_watch - 0.12,
+                      dashed=kind == "updash")
+                ax.text(x + 0.28, 6.45, label, rotation=90, fontsize=7.0,
+                        fontweight="bold", ha="center", va="center")
+            elif kind == "note":
+                tag(ax, x, y_watch - 1.05, label, fs=7.0)
+            else:
+                tag(ax, x, y_phone + 1.05, label, fs=7.0)
+    legend_flow(ax, 7.0, 1.15, "ACK (dashed)")
+    save(fig, "fig_sequence")
+
+
+def fig_storeforward():
+    fig, ax = landscape_ax()
+    ax.text(12, 12.2, "STORE-AND-FORWARD WORKFLOW", fontsize=13,
+            fontweight="bold", ha="center")
+    y = 7.15
+    nodes = [
+        (2.0, "Read sensor\n(every 1 s)", "term", 3.1),
+        (5.8, "Store SQLite\nsynced = 0", "box", 3.0),
+        (9.6, "Fetch unsynced\nrecords", "box", 3.0),
+        (13.4, "Send BLE\nbatch", "box", 3.0),
+        (17.3, "ACK\nreceived?", "diamond", 3.0),
+        (21.5, "markSynced = 1\n(done)", "term", 3.2)]
+    for x, label, kind, width in nodes:
+        if kind == "term": terminator(ax, x, y, width, 1.25, label, fs=8.2)
+        elif kind == "diamond": diamond(ax, x, y, width, 2.1, label, fs=8.2)
+        else: box(ax, x, y, width, 1.5, label, fs=8.2)
+    for a, b in zip(nodes[:-1], nodes[1:]):
+        arrow(ax, a[0] + a[3] / 2, y, b[0] - b[3] / 2, y)
+    small(ax, 19.25, y + 0.42, "Yes", fs=8)
+    box(ax, 17.3, 3.25, 3.7, 1.45, "Keep synced = 0\n(retransmit)", fs=8.2)
+    arrow(ax, 17.3, 6.1, 17.3, 3.98)
+    small(ax, 17.65, 5.05, "No", ha="left", fs=8)
+    line(ax, [(15.45, 3.25), (9.6, 3.25), (9.6, 6.4)], dashed=True)
+    arrow(ax, 9.6, 6.4, 9.6, 6.42, dashed=True)
+    small(ax, 12.5, 3.62, "next interval", fs=7.8)
+    ax.text(3.9, 9.25, "CONTINUOUS · 1 s", fontsize=8.5,
+            fontweight="bold", ha="center")
+    line(ax, [(0.8, 8.8), (7.1, 8.8)])
+    ax.text(15.3, 9.25, "PER INTERVAL · 3/5 min", fontsize=8.5,
+            fontweight="bold", ha="center")
+    line(ax, [(7.9, 8.8), (22.7, 8.8)])
+    legend_flow(ax, 6.2, 1.15, "retransmit (dashed)")
+    save(fig, "fig_storeforward")
+
+
+def fig_timestamp():
+    fig, ax = landscape_ax()
+    ax.text(12, 12.2, "TIMESTAMP ORIGIN AND STORAGE PATH", fontsize=13,
+            fontweight="bold", ha="center")
+    xs = [1.9, 5.1, 8.4, 11.7, 15.0, 18.4, 21.8]
+    labels = [
+        "HR Sensor\nonSensorChanged\ncallback",
+        "Native\nEventChannel\n{bpm, accuracy}",
+        "Dart listener\nlatest values",
+        "Timer.periodic\n(1 s) → _onTick()",
+        "HeartRateReading\nDateTime.now()",
+        "toMap()\nepoch ms",
+        "SQLite\nbpm · accuracy\ntime · synced"]
+    widths = [2.8, 3.0, 2.8, 3.0, 3.0, 3.0, 2.9]
+    y = 6.8
+    for i, (x, label, width) in enumerate(zip(xs, labels, widths)):
+        if i in (0, 6):
+            terminator(ax, x, y, width, 1.75, label,
+                       fs=6.1 if i == 0 else 6.8)
+        else:
+            box(ax, x, y, width, 1.8, label, fs=6.8)
+        num(ax, x, 8.3, i + 1, r=0.26)
+        if i:
+            arrow(ax, xs[i - 1] + widths[i - 1] / 2, y,
+                  x - width / 2, y)
+    ax.add_patch(FancyBboxPatch((0.35, 4.95), 9.55, 4.25,
+        boxstyle="round,pad=0.02,rounding_size=0.08", fill=False,
+        edgecolor="#555555", linewidth=0.9, linestyle=(0, (4, 3))))
+    ax.add_patch(FancyBboxPatch((10.15, 4.95), 13.45, 4.25,
+        boxstyle="round,pad=0.02,rounding_size=0.08", fill=False,
+        edgecolor="#555555", linewidth=0.9, linestyle=(0, (4, 3))))
+    ax.text(5.1, 9.55, "SENSOR STREAM · NOT TIMESTAMPED", fontsize=8.3,
+            fontweight="bold", ha="center")
+    ax.text(16.9, 9.55, "1 s STORAGE PATH · TIMESTAMP CREATED IN DART",
+            fontsize=8.3, fontweight="bold", ha="center")
+    tag(ax, 5.1, 4.0, "Native sends only bpm and accuracy", fs=7.6)
+    tag(ax, 15.0, 4.0, "TIMESTAMP CREATED HERE", fs=7.8)
+    small(ax, 12, 1.8,
+          "DateTime.now() records storage time, not the original sensor event time.",
+          fs=8.2)
+    save(fig, "fig_timestamp")
+
+
+def fig_watch_arch():
+    fig, ax = landscape_ax()
+    ax.text(12, 12.2, "SMARTWATCH INTERNAL ARCHITECTURE", fontsize=13,
+            fontweight="bold", ha="center")
+    # Three native landscape columns: Flutter, bridge/native, external phone.
+    regions = [(0.5, 8.0, "FLUTTER (Dart)"),
+               (8.35, 20.2, "NATIVE (Kotlin / Android)")]
+    for x0, x1, title in regions:
+        ax.add_patch(FancyBboxPatch((x0, 2.25), x1 - x0, 8.6,
+            boxstyle="round,pad=0.02,rounding_size=0.1", fill=False,
+            edgecolor=BLACK, linewidth=1.0, linestyle=(0, (4, 3))))
+        ax.text(x0 + 0.35, 10.45, title, fontsize=9.5,
+                fontweight="bold", ha="left")
+    box(ax, 2.2, 8.65, 3.0, 1.3, "HeartRatePage\nUI", fs=8)
+    box(ax, 5.7, 8.65, 3.2, 1.55, "MonitoringCubit\nBLoC", fs=8)
+    box(ax, 2.2, 5.15, 3.2, 1.35, "BlePeripheral\nplatform bridge", fs=8)
+    box(ax, 5.7, 5.15, 3.2, 1.35, "SQLite\nheart_rate.db", fs=8)
+    arrow(ax, 3.7, 8.65, 4.1, 8.65)
+    line(ax, [(5.0, 7.88), (5.0, 7.35), (2.2, 7.35)])
+    arrow(ax, 2.2, 7.35, 2.2, 5.83)
+    arrow(ax, 5.7, 7.88, 5.7, 5.83)
+
+    box(ax, 10.2, 8.65, 3.0, 1.45, "StreamHandler\nsensor listener", fs=8)
+    box(ax, 14.6, 8.65, 3.5, 1.45, "MonitoringService\nforeground + wakelock", fs=8)
+    box(ax, 15.0, 5.15, 4.5, 1.55,
+        "HeartRateBleServer\nGATT · advertiser · frame queue", fs=8)
+    terminator(ax, 10.2, 3.25, 2.8, 1.15, "HR Sensor", fs=8)
+    # Sensor and stream handler share a clean vertical lane.
+    arrow(ax, 10.2, 3.83, 10.2, 7.92)
+    # Stream handler reaches the BLE server through an orthogonal rail.
+    line(ax, [(11.7, 8.65), (12.1, 8.65), (12.1, 6.15)])
+    arrow(ax, 12.1, 6.15, 12.75, 5.65)
+    # Foreground service has its own direct lane.
+    arrow(ax, 14.6, 7.92, 14.6, 5.93)
+    # Platform-channel traffic uses dedicated rails above and below the boxes.
+    line(ax, [(3.8, 5.55), (3.8, 6.35), (9.75, 6.35),
+              (9.75, 6.75), (10.65, 6.75), (10.65, 6.35),
+              (12.15, 6.35)])
+    arrow(ax, 12.15, 6.35, 12.75, 5.65)
+    tag(ax, 6.65, 6.72, "MethodChannel commands", fs=6.4)
+    line(ax, [(12.75, 4.65), (12.35, 2.55), (8.0, 2.55),
+              (8.0, 4.0), (3.8, 4.0)], dashed=True)
+    arrow(ax, 3.8, 3.95, 3.8, 4.75, dashed=True)
+    tag(ax, 6.65, 3.55, "EventChannel status / ACK", fs=6.4)
+    terminator(ax, 22.2, 5.15, 2.7, 1.25, "Phone\nCentral", fs=8)
+    arrow(ax, 17.25, 5.4, 20.85, 5.4)
+    arrow(ax, 20.85, 4.85, 17.25, 4.85, dashed=True)
+    small(ax, 19.0, 5.75, "NOTIFY", fs=7.4)
+    small(ax, 19.0, 4.5, "ACK", fs=7.4)
+    legend_flow(ax, 7.0, 1.15, "ACK / events (dashed)")
+    save(fig, "fig_watch_arch")
+
+
+def fig_gatt():
+    fig, ax = landscape_ax()
+    ax.text(12, 12.35,
+            "GATT COMMUNICATION PATH · WATCH SERVER ↔ PHONE CLIENT",
+            fontsize=12.5, fontweight="bold", ha="center")
+    # Attribute table occupies a compact top band.
+    ax.add_patch(FancyBboxPatch((0.55, 9.65), 22.9, 1.95,
+        boxstyle="round,pad=0.02,rounding_size=0.08", fill=False,
+        edgecolor=BLACK, linewidth=0.9, linestyle=(0, (4, 3))))
+    box(ax, 3.0, 10.55, 3.5, 0.9, "Service A100\nPRIMARY", fs=7.3)
+    box(ax, 8.1, 10.55, 4.6, 0.9, "Characteristic A101 · NOTIFY\nCCCD 0x2902", fs=7.1)
+    box(ax, 13.2, 10.55, 4.0, 0.9, "Characteristic A102\nWRITE ACK", fs=7.1)
+    small(ax, 19.6, 10.55, "Hosted by Watch / GATT Server", fs=8)
+    arrow(ax, 4.75, 10.55, 5.8, 10.55)
+    arrow(ax, 10.4, 10.55, 11.2, 10.55)
+
+    y_watch, y_phone = 7.25, 3.25
+    box(ax, 1.65, y_watch, 2.7, 1.0, "WATCH\nGATT Server", fs=8)
+    box(ax, 1.65, y_phone, 2.7, 1.0, "PHONE\nGATT Client", fs=8)
+    line(ax, [(3.2, y_watch), (23.3, y_watch)])
+    line(ax, [(3.2, y_phone), (23.3, y_phone)])
+
+    phases = [
+        ("SETUP", 3.5, 6.0, [("note", "open server"), ("note", "advertise")]),
+        ("CONNECT & DISCOVER", 6.25, 11.7,
+         [("up", "scan/connect"), ("up", "MTU 512"), ("up", "discover")]),
+        ("SUBSCRIBE", 11.95, 15.2,
+         [("up", "write CCCD"), ("downD", "SUCCESS")]),
+        ("NOTIFY · FLOW CONTROL", 15.45, 20.1,
+         [("down", "START"), ("down", "DATA × n"), ("down", "END")]),
+        ("ACK", 20.35, 23.25,
+         [("upD", "ACK count"), ("downD", "SUCCESS")])
+    ]
+    step = 1
+    for title, x0, x1, events in phases:
+        ax.add_patch(FancyBboxPatch((x0, 1.85), x1 - x0, 6.75,
+            boxstyle="round,pad=0.02,rounding_size=0.06", fill=False,
+            edgecolor="#666666", linewidth=0.8, linestyle=(0, (4, 3))))
+        ax.text((x0 + x1) / 2, 8.95, title, fontsize=7.4,
+                fontweight="bold", ha="center")
+        exs = [x0 + (i + 1) * (x1 - x0) / (len(events) + 1)
+               for i in range(len(events))]
+        for event_i, (x, (kind, label)) in enumerate(zip(exs, events)):
+            num(ax, x, 9.35, step, r=0.22); step += 1
+            if kind == "note":
+                tag(ax, x, y_watch - 0.85 - event_i * 0.85, label, fs=6.4)
+                continue
+            dashed = kind.endswith("D")
+            if kind.startswith("up"):
+                arrow(ax, x, y_phone + 0.1, x, y_watch - 0.1, dashed=dashed)
+            else:
+                arrow(ax, x, y_watch - 0.1, x, y_phone + 0.1, dashed=dashed)
+            ax.text(x + 0.24, 5.25, label, rotation=90, fontsize=6.4,
+                    fontweight="bold", ha="center", va="center")
+    small(ax, 12, 1.15,
+          "A100/A101/A102 are 16-bit aliases on the Bluetooth base UUID · "
+          "one notification = one frame · payload chunk ≤ MTU − 4.",
+          fs=7.4)
+    save(fig, "fig_gatt")
+
+
+# Final clean-room layout for the watch internals.  This deliberately keeps
+# every connector on a dedicated rail so no arrow crosses a component.
+def fig_watch_arch():
+    fig, ax = landscape_ax()
+    ax.text(12, 12.2, "SMARTWATCH INTERNAL ARCHITECTURE", fontsize=13,
+            fontweight="bold", ha="center")
+
+    # Two simple swimlanes make ownership and direction immediately clear.
+    lanes = [(0.55, 6.65, 15.8, 4.15, "FLUTTER (Dart)"),
+             (0.55, 1.65, 18.25, 4.15, "NATIVE (Kotlin / Android)")]
+    for x, y, w, h, title in lanes:
+        ax.add_patch(FancyBboxPatch(
+            (x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.1",
+            fill=False, edgecolor=BLACK, linewidth=1.0,
+            linestyle=(0, (4, 3))))
+        ax.text(x + 0.35, y + h - 0.45, title, fontsize=9.2,
+                fontweight="bold", ha="left")
+
+    # Flutter lane: one clean left-to-right processing pipeline.
+    top_y = 8.35
+    top_nodes = [
+        (2.15, 2.75, "HeartRatePage\nUI"),
+        (6.05, 2.9, "MonitoringCubit\nBLoC"),
+        (10.05, 2.8, "SQLite\nheart_rate.db"),
+        (14.15, 3.0, "BlePeripheral\nplatform bridge")]
+    for x, w, label in top_nodes:
+        box(ax, x, top_y, w, 1.3, label, fs=7.3)
+    for (x1, w1, _), (x2, w2, _) in zip(top_nodes[:-1], top_nodes[1:]):
+        arrow(ax, x1 + w1 / 2, top_y, x2 - w2 / 2, top_y)
+    small(ax, 8.05, 8.78, "store / fetch", fs=6.4)
+
+    # Native lane: sensor acquisition and BLE transport stay on one baseline.
+    bot_y = 3.85
+    bot_nodes = [
+        (2.15, 2.65, "HR Sensor", "term"),
+        (6.05, 3.0, "StreamHandler\nsensor listener", "box"),
+        (10.05, 3.25, "MonitoringService\nforeground · wakelock", "box"),
+        (14.15, 4.0,
+         "HeartRateBleServer\nGATT server · advertiser\nframe queue", "box")]
+    for x, w, label, kind in bot_nodes:
+        if kind == "term":
+            terminator(ax, x, bot_y, w, 1.15, label, fs=7.3)
+        else:
+            box(ax, x, bot_y, w, 1.5, label,
+                fs=6.0 if x == 14.15 else 6.8)
+    arrow(ax, 3.48, bot_y, 4.55, bot_y)
+    arrow(ax, 7.55, bot_y, 8.43, bot_y)
+    arrow(ax, 11.68, bot_y, 12.15, bot_y)
+
+    # Short vertical platform-channel pair; no long rails or crossings.
+    arrow(ax, 13.88, 7.70, 13.88, 4.53)
+    arrow(ax, 14.42, 4.53, 14.42, 7.70, dashed=True)
+    small(ax, 13.55, 6.10, "commands", ha="right", fs=6.3)
+    small(ax, 14.75, 6.10, "events / ACK", ha="left", fs=6.3)
+
+    # Sensor EventChannel enters the BLoC directly above it.
+    arrow(ax, 6.05, 4.53, 6.05, 7.70, dashed=True)
+    small(ax, 6.35, 6.10, "sensor events", ha="left", fs=6.3)
+
+    # External phone is outside both ownership lanes.
+    terminator(ax, 21.75, bot_y, 2.7, 1.25, "Phone\nCentral", fs=7.4)
+    arrow(ax, 16.15, 4.08, 20.40, 4.08)
+    arrow(ax, 20.40, 3.62, 16.15, 3.62, dashed=True)
+    small(ax, 18.3, 4.42, "NOTIFY", fs=6.8)
+    small(ax, 18.3, 3.28, "ACK", fs=6.8)
+
+    legend_flow(ax, 7.0, 0.65, "events / ACK (dashed)")
+    save(fig, "fig_watch_arch")
 
 
 if __name__ == "__main__":
