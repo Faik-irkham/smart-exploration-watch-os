@@ -970,7 +970,7 @@ def fig_gatt():
         ax.add_patch(FancyBboxPatch((x0, 1.85), x1 - x0, 6.75,
             boxstyle="round,pad=0.02,rounding_size=0.06", fill=False,
             edgecolor="#666666", linewidth=0.8, linestyle=(0, (4, 3))))
-        ax.text((x0 + x1) / 2, 8.95, title, fontsize=7.4,
+        ax.text((x0 + x1) / 2, 8.82, title, fontsize=7.4,
                 fontweight="bold", ha="center")
         exs = [x0 + (i + 1) * (x1 - x0) / (len(events) + 1)
                for i in range(len(events))]
@@ -1014,15 +1014,15 @@ def fig_watch_arch():
     # Flutter lane: one clean left-to-right processing pipeline.
     top_y = 8.35
     top_nodes = [
-        (2.15, 2.75, "HeartRatePage\nUI"),
-        (6.05, 2.9, "MonitoringCubit\nBLoC"),
-        (10.05, 2.8, "SQLite\nheart_rate.db"),
-        (14.15, 3.0, "BlePeripheral\nplatform bridge")]
+        (1.90, 2.65, "HeartRatePage\nUI"),
+        (5.40, 2.80, "MonitoringCubit\nBLoC"),
+        (10.40, 2.80, "SQLite\nheart_rate.db"),
+        (14.70, 2.90, "BlePeripheral\nplatform bridge")]
     for x, w, label in top_nodes:
         box(ax, x, top_y, w, 1.3, label, fs=7.3)
     for (x1, w1, _), (x2, w2, _) in zip(top_nodes[:-1], top_nodes[1:]):
         arrow(ax, x1 + w1 / 2, top_y, x2 - w2 / 2, top_y)
-    small(ax, 8.05, 8.78, "store / fetch", fs=6.4)
+    small(ax, 7.90, 8.72, "store / fetch", fs=6.1)
 
     # Native lane: sensor acquisition and BLE transport stay on one baseline.
     bot_y = 3.85
@@ -1043,14 +1043,14 @@ def fig_watch_arch():
     arrow(ax, 11.68, bot_y, 12.15, bot_y)
 
     # Short vertical platform-channel pair; no long rails or crossings.
-    arrow(ax, 13.88, 7.70, 13.88, 4.53)
-    arrow(ax, 14.42, 4.53, 14.42, 7.70, dashed=True)
-    small(ax, 13.55, 6.10, "commands", ha="right", fs=6.3)
-    small(ax, 14.75, 6.10, "events / ACK", ha="left", fs=6.3)
+    arrow(ax, 14.42, 7.70, 14.42, 4.53)
+    arrow(ax, 14.96, 4.53, 14.96, 7.70, dashed=True)
+    small(ax, 14.09, 6.10, "commands", ha="right", fs=6.3)
+    small(ax, 15.29, 6.10, "events / ACK", ha="left", fs=6.3)
 
     # Sensor EventChannel enters the BLoC directly above it.
-    arrow(ax, 6.05, 4.53, 6.05, 7.70, dashed=True)
-    small(ax, 6.35, 6.10, "sensor events", ha="left", fs=6.3)
+    arrow(ax, 5.40, 4.53, 5.40, 7.70, dashed=True)
+    small(ax, 5.70, 6.10, "sensor events", ha="left", fs=6.3)
 
     # External phone is outside both ownership lanes.
     terminator(ax, 21.75, bot_y, 2.7, 1.25, "Phone\nCentral", fs=7.4)
