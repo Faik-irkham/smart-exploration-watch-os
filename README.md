@@ -36,11 +36,6 @@ terindeks SINTA 2). Dokumentasi disusun agar eksperimen dapat **direproduksi**.
 3. Tiap interval, semua record `synced = 0` dikirim sebagai **satu batch** JSON ke ponsel; yang berhasil terkirim ditandai `synced = 1`.
 4. **Smartphone**: scan → connect → subscribe → merangkai batch → simpan ke SQLite → tampilkan.
 
-## Dokumentasi
-
-- **[docs/BLE_PROTOCOL.md](docs/BLE_PROTOCOL.md)** — spesifikasi protokol BLE (UUID, framing, opcode, MTU, store-and-forward). Wajib dibaca untuk menjaga kedua sisi tetap sinkron.
-- **[docs/EXPERIMENT.md](docs/EXPERIMENT.md)** — desain eksperimen, metrik, dan prosedur verifikasi data untuk paper.
-
 ## Lingkungan pengembangan (diuji)
 
 | Komponen | Versi |
@@ -69,4 +64,4 @@ flutter run            # pilih perangkat ponsel
 ## Status verifikasi
 
 - ✅ Analisis statis: `flutter analyze` bersih di kedua project.
-- ⚠️ Verifikasi end-to-end (BLE di udara) memerlukan perangkat fisik — lihat [docs/EXPERIMENT.md](docs/EXPERIMENT.md).
+- ⚠️ Verifikasi end-to-end (BLE di udara) memerlukan perangkat fisik.

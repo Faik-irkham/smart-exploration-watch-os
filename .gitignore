@@ -1,13 +1,22 @@
 # Sampah sistem berkas macOS
 .DS_Store
 
-# Data hasil ekspor (artefak eksperimen, bukan sumber)
-# Catatan: /hr_analysis/ sengaja TIDAK diabaikan lagi — berisi pipeline analisis
-# yang dirujuk naskah pada bagian Ketersediaan Data dan Kode.
-/watch.csv
-/phone.csv
-/watch-*.csv
-/phone-*.csv
+# Repositori publik hanya memuat kode sumber aplikasi dan berkas CSV hasil
+# ekspor. Materi penulisan (naskah, catatan, skrip analisis, figur) disimpan
+# di lokal saja.
+/docs/
+/hr_analysis/
+/tools/
+/figures/
+*.docx
+~$*.docx
+
+# Artefak log eksperimen mentah
+/watch_log*.txt
+/mtu_*.txt
+
+# Basis data biner hasil tarikan perangkat
+# (berkas CSV hasil ekspornya tetap dilacak)
 /watch.db
 /phone.db
 /watch.db-*
