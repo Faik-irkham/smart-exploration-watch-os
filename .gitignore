@@ -1,5 +1,9 @@
-# Data hasil ekspor & analisis (artefak eksperimen, bukan sumber)
-/hr_analysis/
+# Sampah sistem berkas macOS
+.DS_Store
+
+# Data hasil ekspor (artefak eksperimen, bukan sumber)
+# Catatan: /hr_analysis/ sengaja TIDAK diabaikan lagi — berisi pipeline analisis
+# yang dirujuk naskah pada bagian Ketersediaan Data dan Kode.
 /watch.csv
 /phone.csv
 /watch-*.csv
