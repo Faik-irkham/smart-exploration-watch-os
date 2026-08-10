@@ -152,14 +152,21 @@ class HeartRateDatabase {
   }
 
   /// Seluruh isi tabel sebagai CSV (urut terlama→terbaru), siap diekspor.
+  ///
+  /// Kolom `device_id` + `id` adalah identitas yang dipakai ponsel sebagai
+  /// `record_id`, sehingga kedua ekspor bisa dicocokkan tanpa mengandalkan
+  /// timestamp.
   Future<String> toCsv() async {
     final db = await database;
+    final device = await deviceId();
     final rows = await db.query(_table, orderBy: 'time ASC');
-    final buffer = StringBuffer('id,bpm,accuracy,time_ms,time_iso,synced\n');
+    final buffer = StringBuffer(
+      'id,device_id,bpm,accuracy,time_ms,time_iso,synced\n',
+    );
     for (final r in rows) {
       final reading = HeartRateReading.fromMap(r);
       buffer.writeln(
-        '${reading.id},${reading.bpm},${reading.accuracy},'
+        '${reading.id},$device,${reading.bpm},${reading.accuracy},'
         '${reading.time.millisecondsSinceEpoch},'
         '${reading.time.toIso8601String()},${reading.synced ? 1 : 0}',
       );
