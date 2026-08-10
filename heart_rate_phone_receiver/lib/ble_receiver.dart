@@ -58,6 +58,10 @@ class BleReceiver {
   // ACK. Bernilai -1 bila END diterima tanpa START.
   int _rxBatchId = -1;
 
+  // Percobaan connect selama sesi berjalan, untuk metrik keandalan tautan.
+  int _connectAttempts = 0;
+  int _connectFailures = 0;
+
   // Kelengkapan batch berjalan, diumumkan frame START lalu diperiksa saat END.
   int _rxExpectedFrames = 0;
   int _rxPayloadLength = 0;
@@ -211,6 +215,8 @@ class BleReceiver {
       }
     });
 
+    _connectAttempts++;
+    final connectSw = Stopwatch()..start();
     try {
       // License.nonprofit: penggunaan non-komersial/edukasi sesuai lisensi
       // flutter_blue_plus.
@@ -225,9 +231,21 @@ class BleReceiver {
         // Sebagian perangkat menolak; biarkan pakai MTU default.
       }
       await _subscribe(device);
+      _logConnect(connectSw, 'ok');
     } catch (e) {
+      _connectFailures++;
+      _logConnect(connectSw, 'fail');
       _setError('Gagal connect: $e');
     }
+  }
+
+  /// Kolom: event,attempt,failures,result,duration_ms
+  void _logConnect(Stopwatch sw, String result) {
+    sw.stop();
+    debugPrint(
+      'HR-METRIC,connect,$_connectAttempts,$_connectFailures,$result,'
+      '${sw.elapsedMilliseconds}',
+    );
   }
 
   Future<void> _subscribe(BluetoothDevice device) async {
@@ -415,13 +433,24 @@ class BleReceiver {
       final insertSw = Stopwatch()..start();
       final stored = await _db.insertReadings(readings);
       insertSw.stop();
+      // Delay ujung-ke-ujung: selisih antara waktu sampel diambil di watch dan
+      // saat tersimpan di ponsel. Record tertua menunjukkan berapa lama data
+      // tertahan di antrean, yang terbaru mendekati latensi jalur normal.
+      final now = DateTime.now();
+      var oldestDelayMs = 0;
+      var newestDelayMs = 0;
+      for (final r in readings) {
+        final delay = now.difference(r.time).inMilliseconds;
+        if (delay > oldestDelayMs) oldestDelayMs = delay;
+        if (newestDelayMs == 0 || delay < newestDelayMs) newestDelayMs = delay;
+      }
       // Baris metrik CSV (tarik dengan: flutter logs | grep HR-METRIC, atau
-      // adb logcat). Kolom:
-      // event,batch_id,records,stored,bytes,frames,reassembly_ms,insert_ms
+      // adb logcat). Kolom: event,batch_id,records,stored,bytes,frames,
+      // reassembly_ms,insert_ms,oldest_delay_ms,newest_delay_ms
       debugPrint(
         'HR-METRIC,rx_batch,$batchId,${readings.length},$stored,${bytes.length},'
         '$_rxFrames,${_rxStopwatch.elapsedMilliseconds},'
-        '${insertSw.elapsedMilliseconds}',
+        '${insertSw.elapsedMilliseconds},$oldestDelayMs,$newestDelayMs',
       );
       // Konfirmasi ke watch agar record ditandai terkirim. Tanpa ACK yang
       // cocok, watch mengirim ulang batch ini nanti.

@@ -306,14 +306,6 @@ class BlePeripheral {
     await sub.cancel();
     timer.cancel();
     elapsed.stop();
-
-    // Metrik per batch untuk evaluasi (lihat docs/EXPERIMENT.md §4).
-    // Kolom: event,batch_id,expected,stored,duplicates,status,ack_latency_ms
-    debugPrint(
-      'HR-METRIC,tx_ack,$batchId,$expected,${result.stored},'
-      '${result.duplicates},${result.status},'
-      '${result.ackLatency?.inMilliseconds ?? ''}',
-    );
     return result;
   }
 }

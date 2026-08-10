@@ -36,6 +36,14 @@ class MonitoringCubit extends Cubit<MonitoringState> {
   // Status BLE sebelumnya, untuk mendeteksi transisi ke `connected`.
   BleStatus _lastBleStatus = BleStatus.idle;
 
+  // Berapa kali backlog yang sama sudah dicoba dikirim tanpa dikonfirmasi.
+  // Direset setiap kali satu batch berhasil di-ACK.
+  int _flushAttempt = 0;
+
+  // Saat tautan pulih; dipakai mengukur berapa lama backlog butuh waktu
+  // sampai benar-benar tersimpan di ponsel.
+  DateTime? _reconnectedAt;
+
   /// Interval pengiriman yang tersedia (menit).
   static const intervals = <int>[3, 5];
 
@@ -53,6 +61,7 @@ class MonitoringCubit extends Cubit<MonitoringState> {
     _lastBleStatus = status;
     if (reconnected && state.running) {
       debugPrint('[HR] tersambung kembali — mengirim backlog');
+      _reconnectedAt = DateTime.now();
       unawaited(_flush());
     }
   }
@@ -203,6 +212,7 @@ class MonitoringCubit extends Cubit<MonitoringState> {
       pending,
       deviceId: await _db.deviceId(),
     );
+    _flushAttempt++;
     if (ack.ok) {
       final ids = [for (final r in pending) if (r.id != null) r.id!];
       await _db.markSynced(ids);
@@ -213,6 +223,25 @@ class MonitoringCubit extends Cubit<MonitoringState> {
       );
     }
     final unsent = await _db.countUnsynced();
+
+    // Waktu pemulihan hanya dihitung sampai backlog benar-benar habis, bukan
+    // sampai tautan tersambung — rekoneksi yang tidak diikuti pengiriman
+    // tuntas bukan pemulihan.
+    int? recoveryMs;
+    if (_reconnectedAt != null && ack.ok && unsent == 0) {
+      recoveryMs = DateTime.now().difference(_reconnectedAt!).inMilliseconds;
+      _reconnectedAt = null;
+    }
+
+    // Kolom: event,batch_id,attempt,pending,stored,duplicates,status,
+    //        ack_latency_ms,backlog_after,recovery_ms
+    debugPrint(
+      'HR-METRIC,flush,${ack.batchId},$_flushAttempt,${pending.length},'
+      '${ack.stored},${ack.duplicates},${ack.status},'
+      '${ack.ackLatency?.inMilliseconds ?? ''},$unsent,${recoveryMs ?? ''}',
+    );
+    if (ack.ok) _flushAttempt = 0;
+
     if (isClosed) return;
     emit(state.copyWith(flushing: false, unsentCount: unsent));
   }
