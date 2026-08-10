@@ -64,6 +64,13 @@ class BlePeripheral {
   static const _statusChannel = EventChannel('heart_rate/ble/status');
   static const _ackChannel = EventChannel('heart_rate/ble/ack');
 
+  /// Bila `false`, watch menerima ACK apa pun tanpa memeriksa `batch_id` —
+  /// perilaku versi awal sebelum perbaikan. Dipakai sebagai kelompok pembanding
+  /// pada eksperimen terkontrol; jalankan dengan
+  /// `--dart-define=ACK_VALIDATION=false`. Selain flag ini kedua versi identik.
+  static const ackValidation =
+      bool.fromEnvironment('ACK_VALIDATION', defaultValue: true);
+
   // Aliran ACK dari ponsel, berisi JSON {batch_id, expected, stored, status}.
   // ACK yang tidak bisa di-parse jadi map kosong agar tidak pernah cocok
   // dengan batch mana pun.
@@ -183,8 +190,8 @@ class BlePeripheral {
 
   /// Kirim satu **batch** record ke smartphone yang sedang subscribe.
   ///
-  /// Dikirim sebagai JSON array `[{bpm, accuracy, time}, ...]` agar phone bisa
-  /// membangun ulang database SQLite yang isinya identik dengan watch. Native
+  /// Payload JSON: `{"device": …, "records": [{rid, bpm, accuracy, time}, …]}`.
+  /// Pasangan `device` + `rid` menjadi identitas record di ponsel. Native
   /// memecah payload menjadi beberapa notifikasi (chunk) dengan flow-control,
   /// lalu phone merangkainya kembali.
   ///
@@ -195,17 +202,22 @@ class BlePeripheral {
   Future<bool> sendBatch(
     List<HeartRateReading> readings, {
     required int batchId,
+    required String deviceId,
   }) async {
     if (readings.isEmpty) return false;
-    final json = jsonEncode([
-      for (final r in readings)
-        {
-          'bpm': r.bpm,
-          'accuracy': r.accuracy,
-          // epoch milliseconds, sama seperti penyimpanan di SQLite.
-          'time': r.time.millisecondsSinceEpoch,
-        }
-    ]);
+    final json = jsonEncode({
+      'device': deviceId,
+      'records': [
+        for (final r in readings)
+          {
+            'rid': r.id,
+            'bpm': r.bpm,
+            'accuracy': r.accuracy,
+            // epoch milliseconds, sama seperti penyimpanan di SQLite.
+            'time': r.time.millisecondsSinceEpoch,
+          }
+      ],
+    });
     try {
       final ok = await _method.invokeMethod<bool>('sendBatch', {
         'json': json,
@@ -229,6 +241,7 @@ class BlePeripheral {
   /// pemanggil membiarkan record belum terkirim untuk dikirim ulang nanti.
   Future<BatchAckResult> sendBatchAndAwaitAck(
     List<HeartRateReading> readings, {
+    required String deviceId,
     Duration timeout = const Duration(seconds: 30),
   }) async {
     final batchId = _takeBatchId();
@@ -251,7 +264,7 @@ class BlePeripheral {
     // Berlangganan ACK sebelum mengirim agar tidak ada yang terlewat.
     final sub = _acks.listen((ack) {
       final id = (ack['batch_id'] as num?)?.toInt();
-      if (id != batchId) {
+      if (ackValidation && id != batchId) {
         // ACK basi: milik batch lain, mis. yang sudah kedaluwarsa.
         debugPrint('[HR-BLE] ACK diabaikan (batch $id ≠ $batchId)');
         return;
@@ -260,7 +273,9 @@ class BlePeripheral {
       finish(BatchAckResult(
         batchId: batchId,
         expected: expected,
-        ok: status == 'ok',
+        // Versi awal tidak mengenal status sama sekali: ACK apa pun dianggap
+        // konfirmasi. Direproduksi apa adanya agar pembandingnya jujur.
+        ok: ackValidation ? status == 'ok' : true,
         stored: (ack['stored'] as num?)?.toInt() ?? 0,
         status: status,
         ackLatency: elapsed.elapsed,
@@ -274,7 +289,11 @@ class BlePeripheral {
       ));
     });
 
-    final sent = await sendBatch(readings, batchId: batchId);
+    final sent = await sendBatch(
+      readings,
+      batchId: batchId,
+      deviceId: deviceId,
+    );
     if (!sent) {
       finish(BatchAckResult(
         batchId: batchId,

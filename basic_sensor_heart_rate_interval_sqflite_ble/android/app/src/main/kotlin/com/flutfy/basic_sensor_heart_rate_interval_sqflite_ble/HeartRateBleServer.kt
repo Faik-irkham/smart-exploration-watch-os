@@ -21,6 +21,7 @@ import android.util.Log
 import io.flutter.plugin.common.EventChannel
 import java.util.ArrayDeque
 import java.util.UUID
+import java.util.zip.CRC32
 
 /**
  * GATT server + BLE advertiser. Watch berperan sebagai **peripheral** yang
@@ -52,10 +53,17 @@ class HeartRateBleServer(private val context: Context) {
         val CCCD_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
         // Opcode pada byte pertama tiap notifikasi, agar phone bisa merangkai
-        // batch yang dipecah menjadi beberapa chunk.
-        private const val OP_START: Byte = 0x01 // awal batch baru + batch_id (uint32 BE)
-        private const val OP_DATA: Byte = 0x02  // potongan data JSON
-        private const val OP_END: Byte = 0x03   // akhir batch
+        // batch yang dipecah menjadi beberapa chunk. Semua bilangan multi-byte
+        // memakai urutan big-endian.
+        //   START = 0x01 | batch_id(4) | expected_frames(2) | payload_length(4)
+        //   DATA  = 0x02 | seq(2) | potongan JSON
+        //   END   = 0x03 | crc32(4)
+        private const val OP_START: Byte = 0x01
+        private const val OP_DATA: Byte = 0x02
+        private const val OP_END: Byte = 0x03
+
+        // Byte tambahan di depan payload tiap frame DATA: opcode + seq.
+        private const val DATA_HEADER = 3
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -252,11 +260,11 @@ class HeartRateBleServer(private val context: Context) {
             return false
         }
         val bytes = json.toByteArray(Charsets.UTF_8)
-        // Sisakan ruang untuk header ATT (3 byte) dan opcode (1 byte).
-        val chunkSize = (negotiatedMtu - 3 - 1).coerceAtLeast(18)
+        // Sisakan ruang untuk header ATT (3 byte), opcode, dan nomor urut.
+        val chunkSize = (negotiatedMtu - 3 - DATA_HEADER).coerceAtLeast(16)
+        val dataFrames = (bytes.size + chunkSize - 1) / chunkSize
 
         sendQueue.clear()
-        // START membawa batch_id sebagai uint32 big-endian (4 byte).
         sendQueue.add(
             byteArrayOf(
                 OP_START,
@@ -264,18 +272,39 @@ class HeartRateBleServer(private val context: Context) {
                 (id ushr 16).toByte(),
                 (id ushr 8).toByte(),
                 id.toByte(),
+                (dataFrames ushr 8).toByte(),
+                dataFrames.toByte(),
+                (bytes.size ushr 24).toByte(),
+                (bytes.size ushr 16).toByte(),
+                (bytes.size ushr 8).toByte(),
+                bytes.size.toByte(),
             ),
         )
         var i = 0
+        var seq = 0
         while (i < bytes.size) {
             val end = minOf(i + chunkSize, bytes.size)
-            val frame = ByteArray(end - i + 1)
+            val frame = ByteArray(end - i + DATA_HEADER)
             frame[0] = OP_DATA
-            System.arraycopy(bytes, i, frame, 1, end - i)
+            frame[1] = (seq ushr 8).toByte()
+            frame[2] = seq.toByte()
+            System.arraycopy(bytes, i, frame, DATA_HEADER, end - i)
             sendQueue.add(frame)
             i = end
+            seq++
         }
-        sendQueue.add(byteArrayOf(OP_END))
+        // END membawa CRC32 payload agar penerima bisa memverifikasi
+        // kelengkapan batch, bukan hanya mengandalkan JSON yang bisa di-parse.
+        val crc = CRC32().apply { update(bytes) }.value
+        sendQueue.add(
+            byteArrayOf(
+                OP_END,
+                (crc ushr 24).toByte(),
+                (crc ushr 16).toByte(),
+                (crc ushr 8).toByte(),
+                crc.toByte(),
+            ),
+        )
 
         // Catat metrik batch; durasi diukur saat frame pertama benar-benar dikirim.
         batchId = id

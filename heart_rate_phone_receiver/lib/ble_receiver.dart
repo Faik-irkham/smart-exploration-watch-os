@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'heart_rate_database.dart';
 import 'models/heart_rate_reading.dart';
+import 'utils/crc32.dart';
 
 /// Status koneksi central (phone) ke watch.
 enum ReceiverStatus { idle, scanning, connecting, connected, error }
@@ -37,10 +38,14 @@ class BleReceiver {
   // Karakteristik ACK: phone menulis konfirmasi setelah menyimpan batch.
   static final Guid ackCharUuid = Guid('0000a102-0000-1000-8000-00805f9b34fb');
 
-  // Opcode pada byte pertama tiap notifikasi (sama dengan watch).
+  // Opcode pada byte pertama tiap notifikasi (sama dengan watch):
+  //   START = 0x01 | batch_id(4) | expected_frames(2) | payload_length(4)
+  //   DATA  = 0x02 | seq(2) | potongan JSON
+  //   END   = 0x03 | crc32(4)
   static const _opStart = 0x01;
   static const _opData = 0x02;
   static const _opEnd = 0x03;
+  static const _dataHeader = 3;
 
   // Buffer perakitan batch yang datang berchunk.
   final List<int> _rxBuffer = [];
@@ -52,6 +57,13 @@ class BleReceiver {
   // Pengenal batch berjalan, dibaca dari frame START dan dikembalikan di dalam
   // ACK. Bernilai -1 bila END diterima tanpa START.
   int _rxBatchId = -1;
+
+  // Kelengkapan batch berjalan, diumumkan frame START lalu diperiksa saat END.
+  int _rxExpectedFrames = 0;
+  int _rxPayloadLength = 0;
+  int _rxNextSeq = 0;
+  // Diset bila ada frame DATA yang hilang atau datang tidak berurutan.
+  bool _rxSeqBroken = false;
 
   final _db = HeartRateDatabase.instance;
 
@@ -260,28 +272,67 @@ class BleReceiver {
       case _opStart:
         _rxBuffer.clear();
         _rxFrames = 1;
-        _rxBatchId = _readBatchId(value);
+        _rxNextSeq = 0;
+        _rxSeqBroken = false;
+        _rxBatchId = value.length >= 5 ? _readUint(value, 1, 4) : -1;
+        _rxExpectedFrames = value.length >= 7 ? _readUint(value, 5, 2) : 0;
+        _rxPayloadLength = value.length >= 11 ? _readUint(value, 7, 4) : 0;
         _rxStopwatch
           ..reset()
           ..start();
       case _opData:
-        _rxBuffer.addAll(value.sublist(1));
         _rxFrames++;
+        if (value.length < _dataHeader) {
+          _rxSeqBroken = true;
+          break;
+        }
+        // Nomor urut membuat frame yang hilang atau tertukar bisa dideteksi
+        // sebelum payload dirangkai, bukan menunggu JSON gagal di-parse.
+        final seq = _readUint(value, 1, 2);
+        if (seq != _rxNextSeq) {
+          debugPrint('[RX] frame tidak berurutan: seq=$seq, harusnya $_rxNextSeq');
+          _rxSeqBroken = true;
+        }
+        _rxNextSeq = seq + 1;
+        _rxBuffer.addAll(value.sublist(_dataHeader));
       case _opEnd:
         _rxFrames++;
         _rxStopwatch.stop();
-        await _flushBuffer();
+        await _flushBuffer(
+          crc: value.length >= 5 ? _readUint(value, 1, 4) : null,
+        );
         _rxBatchId = -1;
       default:
         debugPrint('[RX] opcode tidak dikenal: $op');
     }
   }
 
-  /// Baca `batch_id` (uint32 big-endian) dari frame START. Mengembalikan -1
-  /// bila frame terlalu pendek.
-  static int _readBatchId(List<int> frame) {
-    if (frame.length < 5) return -1;
-    return (frame[1] << 24) | (frame[2] << 16) | (frame[3] << 8) | frame[4];
+  /// Periksa kelengkapan batch yang baru dirangkai.
+  ///
+  /// Mengembalikan `null` bila batch utuh, atau nama cacatnya untuk dipakai
+  /// sebagai `status` NACK. Pemeriksaan berlapis: nomor urut menangkap frame
+  /// yang hilang/tertukar, panjang payload menangkap frame yang terpotong, dan
+  /// CRC32 menangkap isi yang berubah meski panjangnya kebetulan cocok.
+  String? _inspectBatch(List<int> bytes, int? crc) {
+    if (_rxBatchId < 0) return 'no_start';
+    if (_rxSeqBroken) return 'missing_frames';
+    if (_rxExpectedFrames > 0 && _rxNextSeq != _rxExpectedFrames) {
+      return 'missing_frames';
+    }
+    if (_rxPayloadLength > 0 && bytes.length != _rxPayloadLength) {
+      return 'length_mismatch';
+    }
+    if (crc != null && crc32(bytes) != crc) return 'crc_mismatch';
+    return null;
+  }
+
+  /// Baca bilangan bulat big-endian sepanjang [length] byte mulai dari [offset].
+  static int _readUint(List<int> frame, int offset, int length) {
+    var value = 0;
+    for (var i = 0; i < length; i++) {
+      value = (value << 8) | (frame[offset + i] & 0xFF);
+    }
+    return value;
   }
 
   /// Tulis ACK `{batch_id, expected, stored, status}` ke karakteristik ACK di
@@ -310,19 +361,42 @@ class BleReceiver {
   }
 
   /// Rakit isi [_rxBuffer] menjadi daftar record, simpan, lalu pancarkan.
-  Future<void> _flushBuffer() async {
+  Future<void> _flushBuffer({int? crc}) async {
     if (_rxBuffer.isEmpty) return;
     final bytes = List<int>.from(_rxBuffer);
     final batchId = _rxBatchId;
     _rxBuffer.clear();
+
+    // Periksa kelengkapan sebelum menyentuh payload: batch yang cacat ditolak
+    // lewat NACK agar watch mengirim ulang tanpa menunggu timeout.
+    final defect = _inspectBatch(bytes, crc);
+    if (defect != null) {
+      debugPrint('[RX] batch $batchId ditolak: $defect');
+      await _sendAck(
+        batchId: batchId,
+        expected: 0,
+        stored: 0,
+        status: defect,
+      );
+      return;
+    }
+
     try {
       final text = utf8.decode(bytes);
-      final list = (jsonDecode(text) as List).cast<dynamic>();
+      final decoded = jsonDecode(text);
+      // Payload v2 berbentuk objek {device, records}; bentuk array adalah
+      // format lama yang masih diterima agar rekaman lama tetap bisa diputar.
+      final list = decoded is Map
+          ? (decoded['records'] as List).cast<dynamic>()
+          : (decoded as List).cast<dynamic>();
+      final deviceId = decoded is Map ? decoded['device'] as String? : null;
       final readings = <HeartRateReading>[
         for (final item in list)
           () {
             final map = (item as Map).cast<String, dynamic>();
             return HeartRateReading(
+              deviceId: deviceId,
+              recordId: (map['rid'] as num?)?.toInt(),
               bpm: (map['bpm'] as num).toDouble(),
               accuracy: (map['accuracy'] as num?)?.toInt() ?? 0,
               time: DateTime.fromMillisecondsSinceEpoch(

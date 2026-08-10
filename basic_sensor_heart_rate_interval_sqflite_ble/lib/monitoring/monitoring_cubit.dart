@@ -199,7 +199,10 @@ class MonitoringCubit extends Cubit<MonitoringState> {
     emit(state.copyWith(flushing: true));
     // Tandai terkirim hanya bila ponsel mengonfirmasi batch **ini**; selain itu
     // record dibiarkan belum terkirim untuk dikirim ulang nanti.
-    final ack = await _ble.sendBatchAndAwaitAck(pending);
+    final ack = await _ble.sendBatchAndAwaitAck(
+      pending,
+      deviceId: await _db.deviceId(),
+    );
     if (ack.ok) {
       final ids = [for (final r in pending) if (r.id != null) r.id!];
       await _db.markSynced(ids);

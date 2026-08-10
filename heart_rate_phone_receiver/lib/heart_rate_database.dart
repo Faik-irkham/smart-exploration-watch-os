@@ -27,11 +27,13 @@ class HeartRateDatabase {
     final path = p.join(dir, _dbName);
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT,
+            record_id INTEGER,
             bpm REAL NOT NULL,
             accuracy INTEGER NOT NULL,
             time INTEGER NOT NULL,
@@ -40,11 +42,14 @@ class HeartRateDatabase {
             accel_sample_count INTEGER NOT NULL DEFAULT 0
           )
         ''');
-        // Indeks unik pada time mencegah duplikat saat watch mengirim ulang
-        // batch (mis. ACK hilang) — store-and-forward jadi aman.
+        // Identitas record dari watch mencegah duplikat saat batch dikirim
+        // ulang (mis. ACK hilang). Dipakai sebagai ganti timestamp karena
+        // timestamp bisa bertabrakan atau bergeser saat jam sistem disetel.
         await db.execute(
-          'CREATE UNIQUE INDEX idx_${_table}_time ON $_table(time)',
+          'CREATE UNIQUE INDEX idx_${_table}_record '
+          'ON $_table(device_id, record_id)',
         );
+        await db.execute('CREATE INDEX idx_${_table}_time ON $_table(time)');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         // v1 -> v2: buang duplikat lama (sisakan id terkecil), lalu buat indeks
@@ -69,6 +74,23 @@ class HeartRateDatabase {
           await db.execute(
             'ALTER TABLE $_table ADD COLUMN accel_sample_count INTEGER '
             'NOT NULL DEFAULT 0',
+          );
+        }
+        // v3 -> v4: anti-duplikat pindah dari timestamp ke identitas record.
+        // Indeks time dibuat non-unik agar timestamp yang bertabrakan tidak
+        // lagi membuang record yang sebenarnya berbeda. Baris lama ber-
+        // device_id NULL tidak saling bentrok karena SQLite memperlakukan NULL
+        // sebagai nilai yang berbeda-beda pada indeks unik.
+        if (oldVersion < 4) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN device_id TEXT');
+          await db.execute('ALTER TABLE $_table ADD COLUMN record_id INTEGER');
+          await db.execute('DROP INDEX IF EXISTS idx_${_table}_time');
+          await db.execute(
+            'CREATE UNIQUE INDEX IF NOT EXISTS idx_${_table}_record '
+            'ON $_table(device_id, record_id)',
+          );
+          await db.execute(
+            'CREATE INDEX IF NOT EXISTS idx_${_table}_time ON $_table(time)',
           );
         }
       },
@@ -135,13 +157,14 @@ class HeartRateDatabase {
     final db = await database;
     final rows = await db.query(_table, orderBy: 'time ASC');
     final buffer = StringBuffer(
-      'id,bpm,accuracy,time_ms,time_iso,'
+      'id,device_id,record_id,bpm,accuracy,time_ms,time_iso,'
       'accel_magnitude_mean,accel_magnitude_std,accel_sample_count\n',
     );
     for (final r in rows) {
       final reading = HeartRateReading.fromMap(r);
       buffer.writeln(
-        '${reading.id},${reading.bpm},${reading.accuracy},'
+        '${reading.id},${reading.deviceId ?? ''},${reading.recordId ?? ''},'
+        '${reading.bpm},${reading.accuracy},'
         '${reading.time.millisecondsSinceEpoch},'
         '${reading.time.toIso8601String()},'
         '${reading.accelMagnitudeMean ?? ''},'

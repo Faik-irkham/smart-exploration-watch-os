@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
@@ -20,8 +21,10 @@ class HeartRateDatabase {
 
   static const _dbName = 'heart_rate.db';
   static const _table = 'readings';
+  static const _metaTable = 'meta';
 
   Database? _db;
+  String? _deviceId;
 
   /// Buka (atau buat) database. Dipanggil otomatis oleh operasi lain.
   Future<Database> get database async {
@@ -30,7 +33,7 @@ class HeartRateDatabase {
     final path = p.join(dir, _dbName);
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table (
@@ -41,6 +44,9 @@ class HeartRateDatabase {
             synced INTEGER NOT NULL DEFAULT 0
           )
         ''');
+        await db.execute(
+          'CREATE TABLE $_metaTable (key TEXT PRIMARY KEY, value TEXT NOT NULL)',
+        );
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         // v1 -> v2: tambahkan kolom synced untuk store-and-forward.
@@ -49,9 +55,42 @@ class HeartRateDatabase {
             'ALTER TABLE $_table ADD COLUMN synced INTEGER NOT NULL DEFAULT 0',
           );
         }
+        // v2 -> v3: tabel meta untuk menyimpan identitas perangkat.
+        if (oldVersion < 3) {
+          await db.execute(
+            'CREATE TABLE IF NOT EXISTS $_metaTable '
+            '(key TEXT PRIMARY KEY, value TEXT NOT NULL)',
+          );
+        }
       },
     );
     return _db!;
+  }
+
+  /// Identitas watch, dibuat sekali lalu disimpan permanen.
+  ///
+  /// Dikirim bersama tiap batch sehingga ponsel bisa memakai pasangan
+  /// `(device_id, record_id)` sebagai identitas record — lebih kokoh daripada
+  /// timestamp yang bisa bertabrakan atau berubah saat jam sistem disetel.
+  Future<String> deviceId() async {
+    if (_deviceId != null) return _deviceId!;
+    final db = await database;
+    final rows = await db.query(
+      _metaTable,
+      where: 'key = ?',
+      whereArgs: ['device_id'],
+      limit: 1,
+    );
+    if (rows.isNotEmpty) {
+      return _deviceId = rows.first['value'] as String;
+    }
+    final random = Random.secure();
+    final id = List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    await db.insert(_metaTable, {'key': 'device_id', 'value': id});
+    return _deviceId = id;
   }
 
   /// Simpan satu pembacaan (default belum terkirim) dan kembalikan objek dengan
