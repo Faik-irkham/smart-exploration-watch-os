@@ -44,6 +44,9 @@ class MonitoringCubit extends Cubit<MonitoringState> {
   // sampai benar-benar tersimpan di ponsel.
   DateTime? _reconnectedAt;
 
+  // Apakah sensor mengirim nilai baru sejak record terakhir ditulis.
+  bool _sensorUpdated = false;
+
   /// Interval pengiriman yang tersedia (menit).
   static const intervals = <int>[3, 5];
 
@@ -126,6 +129,9 @@ class MonitoringCubit extends Cubit<MonitoringState> {
         final data = (event as Map).cast<String, dynamic>();
         final bpm = (data['bpm'] as num?)?.toDouble() ?? 0;
         final accuracy = (data['accuracy'] as num?)?.toInt() ?? 0;
+        // Hanya nilai BPM yang benar-benar baru dihitung sebagai pembacaan
+        // segar; event yang cuma membawa perubahan akurasi tidak.
+        if (bpm > 0) _sensorUpdated = true;
         if (isClosed) return;
         emit(state.copyWith(
           latestBpm: bpm > 0 ? bpm : state.latestBpm,
@@ -179,11 +185,14 @@ class MonitoringCubit extends Cubit<MonitoringState> {
 
     // Simpan satu pembacaan valid per detik.
     if (state.latestBpm > 0) {
+      final fresh = _sensorUpdated;
+      _sensorUpdated = false;
       final saved = await _db.insertReading(
         HeartRateReading(
           bpm: state.latestBpm,
           accuracy: state.latestAccuracy,
           time: DateTime.now(),
+          fresh: fresh,
         ),
       );
       if (isClosed) return;

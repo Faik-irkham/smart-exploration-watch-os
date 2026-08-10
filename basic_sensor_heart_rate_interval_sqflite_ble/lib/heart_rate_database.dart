@@ -33,7 +33,7 @@ class HeartRateDatabase {
     final path = p.join(dir, _dbName);
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table (
@@ -41,7 +41,8 @@ class HeartRateDatabase {
             bpm REAL NOT NULL,
             accuracy INTEGER NOT NULL,
             time INTEGER NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            fresh INTEGER
           )
         ''');
         await db.execute(
@@ -61,6 +62,12 @@ class HeartRateDatabase {
             'CREATE TABLE IF NOT EXISTS $_metaTable '
             '(key TEXT PRIMARY KEY, value TEXT NOT NULL)',
           );
+        }
+        // v3 -> v4: penanda kesegaran pembacaan. Dibiarkan NULL untuk baris
+        // lama karena kesegarannya memang tidak diketahui — menebaknya justru
+        // akan mengotori analisis eksklusi.
+        if (oldVersion < 4) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN fresh INTEGER');
         }
       },
     );
@@ -104,6 +111,7 @@ class HeartRateDatabase {
       accuracy: reading.accuracy,
       time: reading.time,
       synced: reading.synced,
+      fresh: reading.fresh,
     );
   }
 
@@ -161,14 +169,15 @@ class HeartRateDatabase {
     final device = await deviceId();
     final rows = await db.query(_table, orderBy: 'time ASC');
     final buffer = StringBuffer(
-      'id,device_id,bpm,accuracy,time_ms,time_iso,synced\n',
+      'id,device_id,bpm,accuracy,time_ms,time_iso,synced,fresh\n',
     );
     for (final r in rows) {
       final reading = HeartRateReading.fromMap(r);
+      final fresh = reading.fresh == null ? '' : (reading.fresh! ? '1' : '0');
       buffer.writeln(
         '${reading.id},$device,${reading.bpm},${reading.accuracy},'
         '${reading.time.millisecondsSinceEpoch},'
-        '${reading.time.toIso8601String()},${reading.synced ? 1 : 0}',
+        '${reading.time.toIso8601String()},${reading.synced ? 1 : 0},$fresh',
       );
     }
     return buffer.toString();
