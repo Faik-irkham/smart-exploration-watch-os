@@ -199,13 +199,20 @@ class MonitoringCubit extends Cubit<MonitoringState> {
   /// — sisanya menunggu interval berikutnya (store-and-forward).
   Future<void> _flush() async {
     if (state.flushing) return;
+    // Tandai sibuk sebelum await pertama. Kalau tidak, flush dari timer dan
+    // flush dari rekoneksi bisa sama-sama lolos penjaga di atas lalu berebut
+    // mengirim batch yang sama.
+    emit(state.copyWith(flushing: true));
+
     final pending = await _db.getUnsynced();
     if (isClosed) return;
     // Selalu reset hitung mundur, ada data atau tidak.
     emit(state.copyWith(untilSync: Duration(minutes: state.intervalMinutes)));
-    if (pending.isEmpty) return;
+    if (pending.isEmpty) {
+      emit(state.copyWith(flushing: false));
+      return;
+    }
 
-    emit(state.copyWith(flushing: true));
     // Tandai terkirim hanya bila ponsel mengonfirmasi batch **ini**; selain itu
     // record dibiarkan belum terkirim untuk dikirim ulang nanti.
     final ack = await _ble.sendBatchAndAwaitAck(
@@ -224,11 +231,12 @@ class MonitoringCubit extends Cubit<MonitoringState> {
     }
     final unsent = await _db.countUnsynced();
 
-    // Waktu pemulihan hanya dihitung sampai backlog benar-benar habis, bukan
-    // sampai tautan tersambung — rekoneksi yang tidak diikuti pengiriman
-    // tuntas bukan pemulihan.
+    // Waktu pemulihan diukur sampai backlog yang tertahan berhasil
+    // dikonfirmasi. Sengaja tidak menunggu `unsent == 0`: sensor terus menulis
+    // satu record per detik, jadi selalu ada sisa baru yang lahir selama
+    // transfer berlangsung dan syarat itu nyaris tidak pernah terpenuhi.
     int? recoveryMs;
-    if (_reconnectedAt != null && ack.ok && unsent == 0) {
+    if (_reconnectedAt != null && ack.ok) {
       recoveryMs = DateTime.now().difference(_reconnectedAt!).inMilliseconds;
       _reconnectedAt = null;
     }

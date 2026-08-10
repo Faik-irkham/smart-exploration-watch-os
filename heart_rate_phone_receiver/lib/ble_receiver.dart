@@ -279,10 +279,10 @@ class BleReceiver {
   }
 
   /// Tangani satu notifikasi BLE. Watch mengirim batch ber-frame: byte pertama
-  /// adalah opcode (START/DATA/END), sisanya potongan JSON. Frame DATA dirangkai
-  /// di [_rxBuffer]; saat END diterima, buffer di-decode sebagai JSON **array**
-  /// `[{bpm, accuracy, time}, ...]`, disimpan satu transaksi, lalu tiap record
-  /// dipancarkan lewat [onReading].
+  /// adalah opcode (START/DATA/END). Frame DATA dirangkai di [_rxBuffer]; saat
+  /// END diterima, kelengkapannya diperiksa, buffer di-decode sebagai objek
+  /// `{device, records}`, disimpan satu transaksi, lalu dipancarkan lewat
+  /// [onReadings].
   Future<void> _handleValue(List<int> value) async {
     if (value.isEmpty) return;
     final op = value.first;
@@ -319,7 +319,6 @@ class BleReceiver {
         await _flushBuffer(
           crc: value.length >= 5 ? _readUint(value, 1, 4) : null,
         );
-        _rxBatchId = -1;
       default:
         debugPrint('[RX] opcode tidak dikenal: $op');
     }
@@ -331,8 +330,11 @@ class BleReceiver {
   /// sebagai `status` NACK. Pemeriksaan berlapis: nomor urut menangkap frame
   /// yang hilang/tertukar, panjang payload menangkap frame yang terpotong, dan
   /// CRC32 menangkap isi yang berubah meski panjangnya kebetulan cocok.
-  String? _inspectBatch(List<int> bytes, int? crc) {
-    if (_rxBatchId < 0) return 'no_start';
+  String? _inspectBatch(List<int> bytes, int? crc, int batchId) {
+    if (batchId < 0) return 'no_start';
+    // Buffer kosong berarti seluruh frame DATA hilang; tanpa cabang ini batch
+    // itu lewat tanpa ACK dan watch menunggu timeout sia-sia.
+    if (bytes.isEmpty) return 'missing_frames';
     if (_rxSeqBroken) return 'missing_frames';
     if (_rxExpectedFrames > 0 && _rxNextSeq != _rxExpectedFrames) {
       return 'missing_frames';
@@ -380,14 +382,17 @@ class BleReceiver {
 
   /// Rakit isi [_rxBuffer] menjadi daftar record, simpan, lalu pancarkan.
   Future<void> _flushBuffer({int? crc}) async {
-    if (_rxBuffer.isEmpty) return;
+    // Ambil dan lepas keadaan batch berjalan secara sinkron, sebelum await
+    // pertama — kalau tidak, START batch berikutnya yang datang saat
+    // penyimpanan masih berlangsung bisa tertimpa.
     final bytes = List<int>.from(_rxBuffer);
     final batchId = _rxBatchId;
     _rxBuffer.clear();
+    _rxBatchId = -1;
 
     // Periksa kelengkapan sebelum menyentuh payload: batch yang cacat ditolak
     // lewat NACK agar watch mengirim ulang tanpa menunggu timeout.
-    final defect = _inspectBatch(bytes, crc);
+    final defect = _inspectBatch(bytes, crc, batchId);
     if (defect != null) {
       debugPrint('[RX] batch $batchId ditolak: $defect');
       await _sendAck(
