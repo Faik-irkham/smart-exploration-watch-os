@@ -54,7 +54,9 @@ class MainActivity : FlutterActivity() {
                 "sendBatch" -> {
                     val json = call.argument<String>("json")
                     val count = call.argument<Int>("count") ?: 0
-                    val accepted = json != null && server.sendBatch(json, count)
+                    // batchId dikirim sebagai Number agar aman untuk uint32.
+                    val batchId = call.argument<Number>("batchId")?.toLong() ?: 0L
+                    val accepted = json != null && server.sendBatch(json, count, batchId)
                     result.success(accepted)
                 }
                 "isConnected" -> result.success(server.isConnected())

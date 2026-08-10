@@ -33,14 +33,28 @@ class MonitoringCubit extends Cubit<MonitoringState> {
   Timer? _logTimer; // menyimpan 1 pembacaan tiap detik
   Timer? _intervalTimer; // mengirim batch tiap N menit
 
+  // Status BLE sebelumnya, untuk mendeteksi transisi ke `connected`.
+  BleStatus _lastBleStatus = BleStatus.idle;
+
   /// Interval pengiriman yang tersedia (menit).
   static const intervals = <int>[3, 5];
 
   void _onBleChanged() {
+    final status = _ble.status.value;
     emit(state.copyWith(
-      bleStatus: _ble.status.value,
+      bleStatus: status,
       bleMessage: _ble.message.value,
     ));
+
+    // Begitu ponsel tersambung kembali, kirim backlog tanpa menunggu interval
+    // berikutnya — kalau tidak, pemulihan selalu selebar interval (3–5 menit).
+    final reconnected =
+        status == BleStatus.connected && _lastBleStatus != BleStatus.connected;
+    _lastBleStatus = status;
+    if (reconnected && state.running) {
+      debugPrint('[HR] tersambung kembali — mengirim backlog');
+      unawaited(_flush());
+    }
   }
 
   /// Ambil riwayat + jumlah belum terkirim dari SQLite saat aplikasi dibuka.
@@ -183,12 +197,17 @@ class MonitoringCubit extends Cubit<MonitoringState> {
     if (pending.isEmpty) return;
 
     emit(state.copyWith(flushing: true));
-    // Tandai terkirim hanya setelah ponsel mengonfirmasi (ACK). Jika tidak ada
-    // ACK, record dibiarkan belum terkirim untuk dikirim ulang nanti.
-    final ok = await _ble.sendBatchAndAwaitAck(pending);
-    if (ok) {
+    // Tandai terkirim hanya bila ponsel mengonfirmasi batch **ini**; selain itu
+    // record dibiarkan belum terkirim untuk dikirim ulang nanti.
+    final ack = await _ble.sendBatchAndAwaitAck(pending);
+    if (ack.ok) {
       final ids = [for (final r in pending) if (r.id != null) r.id!];
       await _db.markSynced(ids);
+    } else {
+      debugPrint(
+        '[HR] batch ${ack.batchId} tidak dikonfirmasi (${ack.status}); '
+        '${pending.length} record menunggu kiriman berikutnya',
+      );
     }
     final unsent = await _db.countUnsynced();
     if (isClosed) return;

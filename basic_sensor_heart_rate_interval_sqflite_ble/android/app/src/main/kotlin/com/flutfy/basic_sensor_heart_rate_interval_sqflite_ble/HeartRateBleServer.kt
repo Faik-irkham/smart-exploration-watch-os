@@ -38,7 +38,7 @@ class HeartRateBleServer(private val context: Context) {
         private const val TAG = "HR-BLE"
         // Tag khusus metrik. Baris CSV bisa ditarik dengan:
         //   adb logcat -s HR-METRIC:I
-        // Kolom: event,records,bytes,frames,mtu,duration_ms,throughput_Bps
+        // Kolom: event,batch_id,records,bytes,frames,mtu,duration_ms,throughput_Bps
         private const val METRIC_TAG = "HR-METRIC"
 
         // Custom UUID (128-bit) untuk service & karakteristik record. Harus
@@ -53,7 +53,7 @@ class HeartRateBleServer(private val context: Context) {
 
         // Opcode pada byte pertama tiap notifikasi, agar phone bisa merangkai
         // batch yang dipecah menjadi beberapa chunk.
-        private const val OP_START: Byte = 0x01 // awal batch baru
+        private const val OP_START: Byte = 0x01 // awal batch baru + batch_id (uint32 BE)
         private const val OP_DATA: Byte = 0x02  // potongan data JSON
         private const val OP_END: Byte = 0x03   // akhir batch
     }
@@ -77,6 +77,7 @@ class HeartRateBleServer(private val context: Context) {
     private var negotiatedMtu = 23 // default ATT MTU sebelum dinegosiasikan
 
     // Metrik per batch (untuk evaluasi).
+    private var batchId = 0L           // pengenal batch berjalan (dikirim di START)
     private var batchRecords = 0       // jumlah record dalam batch berjalan
     private var batchPayloadBytes = 0  // ukuran payload JSON (tanpa header/opcode)
     private var batchFrames = 0        // total frame (START + DATA… + END)
@@ -97,8 +98,8 @@ class HeartRateBleServer(private val context: Context) {
         }
     }
 
-    /// Aliran ACK ke Dart: tiap kali ponsel menulis konfirmasi, jumlah record
-    /// yang dikonfirmasi dipancarkan agar Dart menandai data terkirim.
+    /// Aliran ACK ke Dart: isi tulisan ponsel diteruskan apa adanya sebagai
+    /// String; parsing & validasi `batch_id` dilakukan di `ble_peripheral.dart`.
     val ackHandler = object : EventChannel.StreamHandler {
         override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
             ackSink = events
@@ -237,16 +238,34 @@ class HeartRateBleServer(private val context: Context) {
      * phone bisa merangkainya kembali. Chunk dikirim satu per satu dengan
      * flow-control lewat [onNotificationSent].
      *
+     * [id] adalah pengenal batch (uint32) yang dibawa frame START dan
+     * dikembalikan ponsel di dalam ACK.
+     *
      * Mengembalikan `true` bila ada perangkat terhubung dan batch diantrekan.
+     * Menolak (`false`) bila masih ada batch yang sedang dikirim, agar antrean
+     * tidak dikosongkan di tengah transfer.
      */
-    fun sendBatch(json: String, count: Int = 0): Boolean {
+    fun sendBatch(json: String, count: Int = 0, id: Long = 0L): Boolean {
         if (subscribers.isEmpty() || recordChar == null) return false
+        if (sending) {
+            Log.w(TAG, "sendBatch ditolak: batch $batchId masih dikirim")
+            return false
+        }
         val bytes = json.toByteArray(Charsets.UTF_8)
         // Sisakan ruang untuk header ATT (3 byte) dan opcode (1 byte).
         val chunkSize = (negotiatedMtu - 3 - 1).coerceAtLeast(18)
 
         sendQueue.clear()
-        sendQueue.add(byteArrayOf(OP_START))
+        // START membawa batch_id sebagai uint32 big-endian (4 byte).
+        sendQueue.add(
+            byteArrayOf(
+                OP_START,
+                (id ushr 24).toByte(),
+                (id ushr 16).toByte(),
+                (id ushr 8).toByte(),
+                id.toByte(),
+            ),
+        )
         var i = 0
         while (i < bytes.size) {
             val end = minOf(i + chunkSize, bytes.size)
@@ -259,12 +278,16 @@ class HeartRateBleServer(private val context: Context) {
         sendQueue.add(byteArrayOf(OP_END))
 
         // Catat metrik batch; durasi diukur saat frame pertama benar-benar dikirim.
+        batchId = id
         batchRecords = count
         batchPayloadBytes = bytes.size
         batchFrames = sendQueue.size
         batchStartNs = 0L
 
-        Log.d(TAG, "sendBatch ${bytes.size} byte dalam ${sendQueue.size} frame (mtu=$negotiatedMtu)")
+        Log.d(
+            TAG,
+            "sendBatch #$id: ${bytes.size} byte dalam ${sendQueue.size} frame (mtu=$negotiatedMtu)",
+        )
         if (!sending) sendNextFrame()
         return true
     }
@@ -285,7 +308,7 @@ class HeartRateBleServer(private val context: Context) {
                 } else 0L
                 Log.i(
                     METRIC_TAG,
-                    "tx_batch,$batchRecords,$batchPayloadBytes,$batchFrames," +
+                    "tx_batch,$batchId,$batchRecords,$batchPayloadBytes,$batchFrames," +
                         "$negotiatedMtu,${"%.1f".format(durationMs)},$throughput",
                 )
                 batchStartNs = 0L
@@ -362,10 +385,10 @@ class HeartRateBleServer(private val context: Context) {
             value: ByteArray?,
         ) {
             if (characteristic?.uuid == ACK_CHAR_UUID) {
-                // Payload ACK = jumlah record yang berhasil disimpan ponsel (teks).
-                val count = value?.toString(Charsets.UTF_8)?.trim()?.toIntOrNull() ?: 0
-                Log.d(TAG, "ACK diterima: $count record")
-                mainHandler.post { ackSink?.success(count) }
+                // Payload ACK = JSON {batch_id, expected, stored, status}.
+                val payload = value?.toString(Charsets.UTF_8)?.trim().orEmpty()
+                Log.d(TAG, "ACK diterima: $payload")
+                mainHandler.post { ackSink?.success(payload) }
             }
             if (responseNeeded) {
                 try {

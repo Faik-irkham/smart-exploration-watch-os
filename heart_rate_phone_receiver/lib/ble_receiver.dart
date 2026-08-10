@@ -49,6 +49,10 @@ class BleReceiver {
   int _rxFrames = 0; // jumlah frame (START + DATA… + END) batch berjalan
   final Stopwatch _rxStopwatch = Stopwatch(); // waktu START → END
 
+  // Pengenal batch berjalan, dibaca dari frame START dan dikembalikan di dalam
+  // ACK. Bernilai -1 bila END diterima tanpa START.
+  int _rxBatchId = -1;
+
   final _db = HeartRateDatabase.instance;
 
   /// Status koneksi terkini untuk indikator UI.
@@ -256,6 +260,7 @@ class BleReceiver {
       case _opStart:
         _rxBuffer.clear();
         _rxFrames = 1;
+        _rxBatchId = _readBatchId(value);
         _rxStopwatch
           ..reset()
           ..start();
@@ -266,18 +271,39 @@ class BleReceiver {
         _rxFrames++;
         _rxStopwatch.stop();
         await _flushBuffer();
+        _rxBatchId = -1;
       default:
         debugPrint('[RX] opcode tidak dikenal: $op');
     }
   }
 
-  /// Tulis ACK (jumlah record yang tersimpan) ke karakteristik ACK di watch.
-  Future<void> _sendAck(int count) async {
+  /// Baca `batch_id` (uint32 big-endian) dari frame START. Mengembalikan -1
+  /// bila frame terlalu pendek.
+  static int _readBatchId(List<int> frame) {
+    if (frame.length < 5) return -1;
+    return (frame[1] << 24) | (frame[2] << 16) | (frame[3] << 8) | frame[4];
+  }
+
+  /// Tulis ACK `{batch_id, expected, stored, status}` ke karakteristik ACK di
+  /// watch. [status] selain `ok` berfungsi sebagai NACK, sehingga watch tidak
+  /// perlu menunggu timeout.
+  Future<void> _sendAck({
+    required int batchId,
+    required int expected,
+    required int stored,
+    String status = 'ok',
+  }) async {
     final ack = _ackChar;
     if (ack == null) return;
+    final payload = jsonEncode({
+      'batch_id': batchId,
+      'expected': expected,
+      'stored': stored,
+      'status': status,
+    });
     try {
-      await ack.write(utf8.encode('$count'), withoutResponse: false);
-      debugPrint('[RX] ACK terkirim: $count record');
+      await ack.write(utf8.encode(payload), withoutResponse: false);
+      debugPrint('[RX] ACK terkirim: $payload');
     } catch (e) {
       debugPrint('[RX] gagal kirim ACK: $e');
     }
@@ -287,6 +313,7 @@ class BleReceiver {
   Future<void> _flushBuffer() async {
     if (_rxBuffer.isEmpty) return;
     final bytes = List<int>.from(_rxBuffer);
+    final batchId = _rxBatchId;
     _rxBuffer.clear();
     try {
       final text = utf8.decode(bytes);
@@ -312,21 +339,36 @@ class BleReceiver {
       if (readings.isEmpty) return;
       // Simpan satu batch dalam satu transaksi, lalu ambil kembali dengan id.
       final insertSw = Stopwatch()..start();
-      await _db.insertReadings(readings);
+      final stored = await _db.insertReadings(readings);
       insertSw.stop();
       // Baris metrik CSV (tarik dengan: flutter logs | grep HR-METRIC, atau
-      // adb logcat). Kolom: event,records,bytes,frames,reassembly_ms,insert_ms
+      // adb logcat). Kolom:
+      // event,batch_id,records,stored,bytes,frames,reassembly_ms,insert_ms
       debugPrint(
-        'HR-METRIC,rx_batch,${readings.length},${bytes.length},$_rxFrames,'
-        '${_rxStopwatch.elapsedMilliseconds},${insertSw.elapsedMilliseconds}',
+        'HR-METRIC,rx_batch,$batchId,${readings.length},$stored,${bytes.length},'
+        '$_rxFrames,${_rxStopwatch.elapsedMilliseconds},'
+        '${insertSw.elapsedMilliseconds}',
       );
-      // Kirim ACK ke watch (jumlah record tersimpan) agar watch menandai data
-      // terkirim. Tanpa ACK, watch akan mengirim ulang batch ini nanti.
-      await _sendAck(readings.length);
+      // Konfirmasi ke watch agar record ditandai terkirim. Tanpa ACK yang
+      // cocok, watch mengirim ulang batch ini nanti.
+      await _sendAck(
+        batchId: batchId,
+        expected: readings.length,
+        stored: stored,
+        // Tanpa START batch tidak bisa diidentifikasi — minta kiriman ulang.
+        status: batchId < 0 ? 'no_start' : 'ok',
+      );
       _readingsController.add(readings);
       _batchController.add(readings.length);
     } catch (e) {
       debugPrint('[RX] gagal parse batch: $e');
+      // NACK: beri tahu watch sekarang juga supaya tidak menunggu timeout.
+      await _sendAck(
+        batchId: batchId,
+        expected: 0,
+        stored: 0,
+        status: 'parse_error',
+      );
     }
   }
 

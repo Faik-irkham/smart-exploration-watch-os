@@ -96,7 +96,11 @@ class HeartRateDatabase {
   }
 
   /// Simpan banyak pembacaan sekaligus (satu batch dari watch) dalam satu
-  /// transaksi agar cepat. Mengembalikan jumlah baris yang tersimpan.
+  /// transaksi agar cepat.
+  ///
+  /// Mengembalikan jumlah record yang **baru** tersimpan; record yang sudah ada
+  /// tidak dihitung, sehingga selisihnya terhadap panjang [readings] adalah
+  /// jumlah duplikat.
   Future<int> insertReadings(List<HeartRateReading> readings) async {
     if (readings.isEmpty) return 0;
     final db = await database;
@@ -109,7 +113,8 @@ class HeartRateDatabase {
       );
     }
     final results = await batch.commit(noResult: false);
-    return results.length;
+    // Insert yang diabaikan karena duplikat mengembalikan rowid 0.
+    return results.where((r) => (r as int? ?? 0) > 0).length;
   }
 
   /// Ambil seluruh riwayat, terbaru lebih dulu.

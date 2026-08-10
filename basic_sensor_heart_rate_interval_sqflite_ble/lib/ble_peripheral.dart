@@ -9,6 +9,39 @@ import 'models/heart_rate_reading.dart';
 /// Status BLE dari sisi native (watch berperan sebagai peripheral).
 enum BleStatus { idle, advertising, connected, error }
 
+/// Hasil satu percobaan pengiriman batch beserta konfirmasinya.
+class BatchAckResult {
+  const BatchAckResult({
+    required this.batchId,
+    required this.expected,
+    this.ok = false,
+    this.stored = 0,
+    this.status = 'timeout',
+    this.ackLatency,
+  });
+
+  /// Pengenal batch yang dikirim di frame START.
+  final int batchId;
+
+  /// Jumlah record yang dikirim watch.
+  final int expected;
+
+  /// `true` hanya bila ponsel mengonfirmasi batch **ini** tersimpan.
+  final bool ok;
+
+  /// Jumlah record yang baru tersimpan di ponsel.
+  final int stored;
+
+  /// `ok`, `parse_error`, `no_start`, `timeout`, atau `not_sent`.
+  final String status;
+
+  /// Waktu dari permintaan kirim sampai ACK yang cocok diterima.
+  final Duration? ackLatency;
+
+  /// Record yang ternyata sudah ada di ponsel sebelumnya.
+  int get duplicates => ok ? expected - stored : 0;
+}
+
 /// Jembatan ke BLE GATT server native (lihat MainActivity.kt).
 ///
 /// Watch berperan sebagai **peripheral / GATT server** yang mengiklankan
@@ -31,12 +64,32 @@ class BlePeripheral {
   static const _statusChannel = EventChannel('heart_rate/ble/status');
   static const _ackChannel = EventChannel('heart_rate/ble/ack');
 
-  // Aliran ACK dari ponsel (jumlah record yang dikonfirmasi tersimpan).
-  Stream<int>? _ackStream;
-  Stream<int> get _acks => _ackStream ??= _ackChannel
-      .receiveBroadcastStream()
-      .map((e) => (e as num).toInt())
-      .asBroadcastStream();
+  // Aliran ACK dari ponsel, berisi JSON {batch_id, expected, stored, status}.
+  // ACK yang tidak bisa di-parse jadi map kosong agar tidak pernah cocok
+  // dengan batch mana pun.
+  Stream<Map<String, dynamic>>? _ackStream;
+  Stream<Map<String, dynamic>> get _acks =>
+      _ackStream ??= _ackChannel.receiveBroadcastStream().map((event) {
+        try {
+          final decoded = jsonDecode(event as String);
+          if (decoded is Map) return decoded.cast<String, dynamic>();
+        } catch (_) {
+          // Ditangani sama seperti ACK yang bentuknya tak dikenal.
+        }
+        debugPrint('[HR-BLE] ACK tidak dikenali: $event');
+        return <String, dynamic>{};
+      }).asBroadcastStream();
+
+  // Di-seed dari epoch detik agar tetap menaik walau aplikasi dimulai ulang,
+  // sehingga ACK sesi sebelumnya tidak pernah cocok. Dibatasi 32 bit karena
+  // frame START membawanya sebagai uint32.
+  int _nextBatchId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+  int _takeBatchId() {
+    final id = _nextBatchId & 0xFFFFFFFF;
+    _nextBatchId = id + 1;
+    return id;
+  }
 
   /// Status koneksi terkini, dipakai UI untuk menampilkan indikator.
   final ValueNotifier<BleStatus> status = ValueNotifier(BleStatus.idle);
@@ -136,8 +189,13 @@ class BlePeripheral {
   /// lalu phone merangkainya kembali.
   ///
   /// Mengembalikan `true` jika native menerima permintaan kirim (ada perangkat
-  /// terhubung), sehingga pemanggil bisa menandai record sebagai terkirim.
-  Future<bool> sendBatch(List<HeartRateReading> readings) async {
+  /// terhubung dan tidak ada batch lain yang sedang dikirim).
+  ///
+  /// [batchId] dibawa frame START dan dikembalikan ponsel di dalam ACK.
+  Future<bool> sendBatch(
+    List<HeartRateReading> readings, {
+    required int batchId,
+  }) async {
     if (readings.isEmpty) return false;
     final json = jsonEncode([
       for (final r in readings)
@@ -153,6 +211,7 @@ class BlePeripheral {
         'json': json,
         // Jumlah record dikirim agar native bisa mencatat metrik per batch.
         'count': readings.length,
+        'batchId': batchId,
       });
       return ok ?? false;
     } on PlatformException catch (_) {
@@ -161,29 +220,81 @@ class BlePeripheral {
     }
   }
 
-  /// Kirim batch lalu **tunggu ACK** dari ponsel (konfirmasi data tersimpan).
+  /// Kirim batch lalu **tunggu ACK yang cocok** dari ponsel.
   ///
-  /// Mengembalikan `true` hanya bila ponsel mengonfirmasi penerimaan dalam
-  /// [timeout]; jika tidak, `false` agar pemanggil tidak menandai record
-  /// terkirim (data akan dikirim ulang pada interval berikutnya).
-  Future<bool> sendBatchAndAwaitAck(
+  /// Batch diberi `batch_id` unik yang dibawa frame START; ACK hanya diterima
+  /// bila membawa `batch_id` yang sama **dan** `status == "ok"`.
+  ///
+  /// Hasilnya `ok == false` bila konfirmasi tidak datang dalam [timeout], agar
+  /// pemanggil membiarkan record belum terkirim untuk dikirim ulang nanti.
+  Future<BatchAckResult> sendBatchAndAwaitAck(
     List<HeartRateReading> readings, {
     Duration timeout = const Duration(seconds: 30),
   }) async {
-    if (readings.isEmpty) return false;
-    final completer = Completer<bool>();
+    final batchId = _takeBatchId();
+    final expected = readings.length;
+    if (readings.isEmpty) {
+      return BatchAckResult(
+        batchId: batchId,
+        expected: 0,
+        status: 'not_sent',
+      );
+    }
+
+    final completer = Completer<BatchAckResult>();
+    final elapsed = Stopwatch()..start();
+
+    void finish(BatchAckResult result) {
+      if (!completer.isCompleted) completer.complete(result);
+    }
+
     // Berlangganan ACK sebelum mengirim agar tidak ada yang terlewat.
-    final sub = _acks.listen((_) {
-      if (!completer.isCompleted) completer.complete(true);
+    final sub = _acks.listen((ack) {
+      final id = (ack['batch_id'] as num?)?.toInt();
+      if (id != batchId) {
+        // ACK basi: milik batch lain, mis. yang sudah kedaluwarsa.
+        debugPrint('[HR-BLE] ACK diabaikan (batch $id ≠ $batchId)');
+        return;
+      }
+      final status = (ack['status'] as String?) ?? 'ok';
+      finish(BatchAckResult(
+        batchId: batchId,
+        expected: expected,
+        ok: status == 'ok',
+        stored: (ack['stored'] as num?)?.toInt() ?? 0,
+        status: status,
+        ackLatency: elapsed.elapsed,
+      ));
     });
     final timer = Timer(timeout, () {
-      if (!completer.isCompleted) completer.complete(false);
+      finish(BatchAckResult(
+        batchId: batchId,
+        expected: expected,
+        status: 'timeout',
+      ));
     });
-    final sent = await sendBatch(readings);
-    if (!sent && !completer.isCompleted) completer.complete(false);
-    final ok = await completer.future;
+
+    final sent = await sendBatch(readings, batchId: batchId);
+    if (!sent) {
+      finish(BatchAckResult(
+        batchId: batchId,
+        expected: expected,
+        status: 'not_sent',
+      ));
+    }
+
+    final result = await completer.future;
     await sub.cancel();
     timer.cancel();
-    return ok;
+    elapsed.stop();
+
+    // Metrik per batch untuk evaluasi (lihat docs/EXPERIMENT.md §4).
+    // Kolom: event,batch_id,expected,stored,duplicates,status,ack_latency_ms
+    debugPrint(
+      'HR-METRIC,tx_ack,$batchId,$expected,${result.stored},'
+      '${result.duplicates},${result.status},'
+      '${result.ackLatency?.inMilliseconds ?? ''}',
+    );
+    return result;
   }
 }
