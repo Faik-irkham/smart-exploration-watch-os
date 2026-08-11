@@ -50,7 +50,7 @@ class BleReceiver {
   // Buffer perakitan batch yang datang berchunk.
   final List<int> _rxBuffer = [];
 
-  // Metrik penerimaan per batch (untuk evaluasi pada paper).
+  // Metrik penerimaan per batch.
   int _rxFrames = 0; // jumlah frame (START + DATA… + END) batch berjalan
   final Stopwatch _rxStopwatch = Stopwatch(); // waktu START → END
 

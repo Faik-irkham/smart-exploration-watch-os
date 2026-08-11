@@ -61,10 +61,8 @@ class HeartRateDatabase {
             'ON $_table(time)',
           );
         }
-        // v2 -> v3 dulu menambahkan kolom ringkasan akselerometer. Kolom itu
-        // tidak pernah diisi oleh watch pada sistem yang dievaluasi, jadi
-        // dilepas. Pemasangan lama yang sudah memilikinya tidak terganggu:
-        // kolomnya sekadar tidak dipakai lagi.
+        // v2 -> v3 tidak lagi menambah apa pun; kolom yang dulu dibuat di sana
+        // sudah tidak dipakai dan dibiarkan pada pemasangan yang memilikinya.
         // v3 -> v4: anti-duplikat pindah dari timestamp ke identitas record.
         // Indeks time dibuat non-unik agar timestamp yang bertabrakan tidak
         // lagi membuang record yang sebenarnya berbeda. Baris lama ber-
