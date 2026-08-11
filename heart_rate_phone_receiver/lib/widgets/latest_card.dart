@@ -43,12 +43,6 @@ class LatestCard extends StatelessWidget {
               formatDateTime(latest!.time),
               style: const TextStyle(fontSize: 12, color: Colors.white70),
             ),
-            if (latest!.accelMagnitudeStd != null)
-              Text(
-                'Gerak σ ${latest!.accelMagnitudeStd!.toStringAsFixed(2)} '
-                'm/s² • ${latest!.accelSampleCount} sampel',
-                style: const TextStyle(fontSize: 11, color: Colors.white70),
-              ),
           ],
         ],
       ),

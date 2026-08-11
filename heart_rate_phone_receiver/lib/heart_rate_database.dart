@@ -36,10 +36,7 @@ class HeartRateDatabase {
             record_id INTEGER,
             bpm REAL NOT NULL,
             accuracy INTEGER NOT NULL,
-            time INTEGER NOT NULL,
-            accel_magnitude_mean REAL,
-            accel_magnitude_std REAL,
-            accel_sample_count INTEGER NOT NULL DEFAULT 0
+            time INTEGER NOT NULL
           )
         ''');
         // Identitas record dari watch mencegah duplikat saat batch dikirim
@@ -64,18 +61,10 @@ class HeartRateDatabase {
             'ON $_table(time)',
           );
         }
-        if (oldVersion < 3) {
-          await db.execute(
-            'ALTER TABLE $_table ADD COLUMN accel_magnitude_mean REAL',
-          );
-          await db.execute(
-            'ALTER TABLE $_table ADD COLUMN accel_magnitude_std REAL',
-          );
-          await db.execute(
-            'ALTER TABLE $_table ADD COLUMN accel_sample_count INTEGER '
-            'NOT NULL DEFAULT 0',
-          );
-        }
+        // v2 -> v3 dulu menambahkan kolom ringkasan akselerometer. Kolom itu
+        // tidak pernah diisi oleh watch pada sistem yang dievaluasi, jadi
+        // dilepas. Pemasangan lama yang sudah memilikinya tidak terganggu:
+        // kolomnya sekadar tidak dipakai lagi.
         // v3 -> v4: anti-duplikat pindah dari timestamp ke identitas record.
         // Indeks time dibuat non-unik agar timestamp yang bertabrakan tidak
         // lagi membuang record yang sebenarnya berbeda. Baris lama ber-
@@ -108,12 +97,11 @@ class HeartRateDatabase {
     );
     return HeartRateReading(
       id: id,
+      deviceId: reading.deviceId,
+      recordId: reading.recordId,
       bpm: reading.bpm,
       accuracy: reading.accuracy,
       time: reading.time,
-      accelMagnitudeMean: reading.accelMagnitudeMean,
-      accelMagnitudeStd: reading.accelMagnitudeStd,
-      accelSampleCount: reading.accelSampleCount,
     );
   }
 
@@ -157,8 +145,7 @@ class HeartRateDatabase {
     final db = await database;
     final rows = await db.query(_table, orderBy: 'time ASC');
     final buffer = StringBuffer(
-      'id,device_id,record_id,bpm,accuracy,time_ms,time_iso,'
-      'accel_magnitude_mean,accel_magnitude_std,accel_sample_count\n',
+      'id,device_id,record_id,bpm,accuracy,time_ms,time_iso\n',
     );
     for (final r in rows) {
       final reading = HeartRateReading.fromMap(r);
@@ -166,9 +153,7 @@ class HeartRateDatabase {
         '${reading.id},${reading.deviceId ?? ''},${reading.recordId ?? ''},'
         '${reading.bpm},${reading.accuracy},'
         '${reading.time.millisecondsSinceEpoch},'
-        '${reading.time.toIso8601String()},'
-        '${reading.accelMagnitudeMean ?? ''},'
-        '${reading.accelMagnitudeStd ?? ''},${reading.accelSampleCount}',
+        '${reading.time.toIso8601String()}',
       );
     }
     return buffer.toString();

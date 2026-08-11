@@ -426,10 +426,6 @@ class BleReceiver {
                 (map['time'] as num?)?.toInt() ??
                     DateTime.now().millisecondsSinceEpoch,
               ),
-              accelMagnitudeMean: (map['accelMagnitudeMean'] as num?)
-                  ?.toDouble(),
-              accelMagnitudeStd: (map['accelMagnitudeStd'] as num?)?.toDouble(),
-              accelSampleCount: (map['accelSampleCount'] as num?)?.toInt() ?? 0,
             );
           }(),
       ];
