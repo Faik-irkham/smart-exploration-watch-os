@@ -110,6 +110,13 @@ class MonitoringCubit extends Cubit<MonitoringState> {
   /// valid disimpan ke SQLite, dan tiap interval seluruh data yang belum
   /// terkirim dikirim ke smartphone sebagai satu batch.
   void _start() {
+    // Kedua build eksperimen tampak identik di layar. Penanda ini membuat versi
+    // yang berjalan tercatat di log tiap sesi, sehingga tidak perlu mengandalkan
+    // ingatan tentang APK mana yang terakhir dipasang.
+    debugPrint(
+      'HR-METRIC,session_start,ack_validation=${BlePeripheral.ackValidation},'
+      'interval_min=${state.intervalMinutes}',
+    );
     emit(state.copyWith(
       running: true,
       error: null,
