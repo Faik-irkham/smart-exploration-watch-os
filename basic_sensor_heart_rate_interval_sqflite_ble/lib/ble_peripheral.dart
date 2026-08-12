@@ -64,12 +64,14 @@ class BlePeripheral {
   static const _statusChannel = EventChannel('heart_rate/ble/status');
   static const _ackChannel = EventChannel('heart_rate/ble/ack');
 
-  /// Bila `false`, watch menerima ACK apa pun tanpa memeriksa `batch_id` —
-  /// perilaku versi awal sebelum perbaikan. Dipakai sebagai kelompok pembanding
-  /// pada eksperimen terkontrol; jalankan dengan
-  /// `--dart-define=ACK_VALIDATION=false`. Selain flag ini kedua versi identik.
-  static const ackValidation =
-      bool.fromEnvironment('ACK_VALIDATION', defaultValue: true);
+  /// Bila `false`, record ditandai terkirim begitu panggilan kirim lokal
+  /// berhasil, **tanpa menunggu konfirmasi penerima** — perilaku versi awal.
+  ///
+  /// Inilah satu-satunya perbedaan antara kedua build eksperimen, dan inilah
+  /// yang dipersoalkan: menandai status kirim berdasarkan kejadian lokal, bukan
+  /// berdasarkan kejadian yang berasal dari penerima. Jalankan versi awal
+  /// dengan `--dart-define=AWAIT_ACK=false`.
+  static const awaitAck = bool.fromEnvironment('AWAIT_ACK', defaultValue: true);
 
   // Aliran ACK dari ponsel, berisi JSON {batch_id, expected, stored, status}.
   // ACK yang tidak bisa di-parse jadi map kosong agar tidak pernah cocok
@@ -264,7 +266,7 @@ class BlePeripheral {
     // Berlangganan ACK sebelum mengirim agar tidak ada yang terlewat.
     final sub = _acks.listen((ack) {
       final id = (ack['batch_id'] as num?)?.toInt();
-      if (ackValidation && id != batchId) {
+      if (id != batchId) {
         // ACK basi: milik batch lain, mis. yang sudah kedaluwarsa.
         debugPrint('[HR-BLE] ACK diabaikan (batch $id ≠ $batchId)');
         return;
@@ -273,9 +275,7 @@ class BlePeripheral {
       finish(BatchAckResult(
         batchId: batchId,
         expected: expected,
-        // Versi awal tidak mengenal status sama sekali: ACK apa pun dianggap
-        // konfirmasi. Direproduksi apa adanya agar pembandingnya jujur.
-        ok: ackValidation ? status == 'ok' : true,
+        ok: status == 'ok',
         stored: (ack['stored'] as num?)?.toInt() ?? 0,
         status: status,
         ackLatency: elapsed.elapsed,
@@ -299,6 +299,19 @@ class BlePeripheral {
         batchId: batchId,
         expected: expected,
         status: 'not_sent',
+      ));
+    } else if (!awaitAck) {
+      // Versi awal: status kirim dimajukan oleh keberhasilan panggilan lokal,
+      // bukan oleh konfirmasi penerima. Panggilan yang berhasil hanya berarti
+      // frame diserahkan ke protocol stack — bukan bahwa datanya tersimpan di
+      // ponsel. Direproduksi apa adanya sebagai kelompok pembanding.
+      finish(BatchAckResult(
+        batchId: batchId,
+        expected: expected,
+        ok: true,
+        stored: expected,
+        status: 'sent_unconfirmed',
+        ackLatency: elapsed.elapsed,
       ));
     }
 

@@ -114,7 +114,7 @@ class MonitoringCubit extends Cubit<MonitoringState> {
     // yang berjalan tercatat di log tiap sesi, sehingga tidak perlu mengandalkan
     // ingatan tentang APK mana yang terakhir dipasang.
     debugPrint(
-      'HR-METRIC,session_start,ack_validation=${BlePeripheral.ackValidation},'
+      'HR-METRIC,session_start,await_ack=${BlePeripheral.awaitAck},'
       'interval_min=${state.intervalMinutes}',
     );
     emit(state.copyWith(
