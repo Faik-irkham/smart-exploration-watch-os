@@ -377,8 +377,13 @@ class HeartRateBleServer(private val context: Context) {
             device ?: return
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.d(TAG, "perangkat terhubung: ${device.address}")
-                    emit("connected", device.address)
+                    // Sengaja belum "connected": tautan sudah terbentuk, tetapi
+                    // batch baru boleh dikirim setelah ponsel menulis CCCD dan
+                    // masuk daftar subscriber. Status diumumkan di
+                    // onDescriptorWriteRequest agar sepadan dengan isConnected(),
+                    // dan agar backfill saat rekoneksi tidak terpicu terlalu dini
+                    // lalu terbuang karena belum ada penerima.
+                    Log.d(TAG, "tautan terbentuk: ${device.address}")
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.d(TAG, "perangkat terputus: ${device.address}")
