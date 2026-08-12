@@ -21,3 +21,11 @@
 /phone.db
 /watch.db-*
 /phone.db-*
+
+# Artefak build APK — dibuat ulang dengan `flutter build apk --release`
+/apk/
+
+# Data sesi uji coba instrumentasi (bukan data penelitian; naskah tidak
+# merujuknya). Data 18 sesi resmi ada di /sesi/ dan tetap dilacak.
+/uji_*/
+/uji*.log
