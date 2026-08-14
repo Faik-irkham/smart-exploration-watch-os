@@ -1,0 +1,11 @@
+sesi      : sesi_10_A_S3
+mulai     : 2026-08-14 21:17:14
+baterai   : watch 79% · ponsel 63%
+mulai rekam : 2026-08-14 21:19:27  (session_start, await_ack=false → versi A)
+skenario    : S3 — menjauh membawa watch, ponsel ditinggal di meja, 5 menit
+rencana     : jauhkan 21:26 · dekatkan 21:31 · berhenti 21:38 (tepat setelah flush)
+gangguan mulai : 
+gangguan pulih : 
+selesai   : 2026-08-14 21:42:09
+baterai   : watch 66% · ponsel 78%
+ekspor    : watch_hr_20260814_214035.csv / phone_hr_20260814_214037.csv

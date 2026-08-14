@@ -1,0 +1,12 @@
+08-14 21:31:06.578 I/flutter (24755): HR-METRIC,connect,11,1,ok,2696
+08-14 21:31:06.770 I/flutter (24755): HR-METRIC,connect,11,1,ok,1654
+08-14 21:31:07.188 I/flutter (24755): HR-METRIC,rx_batch,1786717164,338,338,20089,42,440,62,339296,1402
+08-14 21:31:07.292 I/flutter (24755): [RX] ACK terkirim: {"batch_id":1786717164,"expected":338,"stored":338,"status":"ok"}
+08-14 21:31:29.021 I/flutter (24755): HR-METRIC,rx_batch,1786717165,22,22,1355,5,20,19,22237,1232
+08-14 21:31:29.142 I/flutter (24755): [RX] ACK terkirim: {"batch_id":1786717165,"expected":22,"stored":22,"status":"ok"}
+08-14 21:34:29.177 I/flutter (24755): HR-METRIC,rx_batch,1786717166,180,180,10715,24,177,44,180383,1389
+08-14 21:34:29.308 I/flutter (24755): [RX] ACK terkirim: {"batch_id":1786717166,"expected":180,"stored":180,"status":"ok"}
+08-14 21:37:29.187 I/flutter (24755): HR-METRIC,rx_batch,1786717167,180,180,10682,24,167,38,180405,1402
+08-14 21:37:29.283 I/flutter (24755): [RX] ACK terkirim: {"batch_id":1786717167,"expected":180,"stored":180,"status":"ok"}
+08-14 21:40:29.293 I/flutter (24755): HR-METRIC,rx_batch,1786717168,180,180,10677,24,234,48,180509,1510
+08-14 21:40:29.450 I/flutter (24755): [RX] ACK terkirim: {"batch_id":1786717168,"expected":180,"stored":180,"status":"ok"}
