@@ -1,0 +1,22 @@
+08-13 12:28:14.113 I/flutter ( 1890): HR-METRIC,connect,4,0,ok,2157
+08-13 12:28:14.175 I/flutter ( 1890): HR-METRIC,rx_batch,1786597308,2,2,174,3,2,12,3572,2568
+08-13 12:28:14.254 I/flutter ( 1890): [RX] ACK terkirim: {"batch_id":1786597308,"expected":2,"stored":2,"status":"ok"}
+08-13 12:31:10.663 I/flutter ( 1890): HR-METRIC,rx_batch,1786597309,176,176,10286,23,267,30,178054,3058
+08-13 12:31:10.812 I/flutter ( 1890): [RX] ACK terkirim: {"batch_id":1786597309,"expected":176,"stored":176,"status":"ok"}
+08-13 12:34:10.676 I/flutter ( 1890): HR-METRIC,rx_batch,1786597310,180,180,10510,23,286,45,182070,3071
+08-13 12:34:10.789 I/flutter ( 1890): [RX] ACK terkirim: {"batch_id":1786597310,"expected":180,"stored":180,"status":"ok"}
+08-13 12:40:14.323 I/flutter ( 7739): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 12:40:15.832 I/flutter ( 7739): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 12:40:17.539 I/flutter ( 7739): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 12:40:22.229 I/flutter ( 7739): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 12:40:23.069 I/flutter ( 7739): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 12:40:30.660 I/flutter ( 7739): HR-METRIC,connect,2,0,ok,2784
+08-13 12:40:31.036 I/flutter ( 7739): HR-METRIC,connect,2,0,ok,1956
+08-13 12:40:31.840 I/flutter ( 7739): HR-METRIC,rx_batch,1786597313,381,381,22410,47,1003,69,383235,1827
+08-13 12:40:31.972 I/flutter ( 7739): [RX] ACK terkirim: {"batch_id":1786597313,"expected":381,"stored":381,"status":"ok"}
+08-13 12:43:10.558 I/flutter ( 7739): HR-METRIC,rx_batch,1786597314,159,159,9332,21,169,29,159547,1547
+08-13 12:43:10.639 I/flutter ( 7739): [RX] ACK terkirim: {"batch_id":1786597314,"expected":159,"stored":159,"status":"ok"}
+08-13 12:46:10.615 I/flutter ( 7739): HR-METRIC,rx_batch,1786597315,180,180,10587,23,225,34,180603,1603
+08-13 12:46:10.684 I/flutter ( 7739): [RX] ACK terkirim: {"batch_id":1786597315,"expected":180,"stored":180,"status":"ok"}
+08-13 12:49:10.601 I/flutter ( 7739): HR-METRIC,rx_batch,1786597316,180,180,10582,23,188,57,180588,1589
+08-13 12:49:10.683 I/flutter ( 7739): [RX] ACK terkirim: {"batch_id":1786597316,"expected":180,"stored":180,"status":"ok"}

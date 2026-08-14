@@ -1,0 +1,21 @@
+08-13 13:52:09.554 I/flutter (24968): HR-METRIC,connect,3,0,ok,4806
+08-13 13:52:09.629 I/flutter (24968): HR-METRIC,connect,3,0,ok,4160
+08-13 13:52:09.723 I/flutter (24968): HR-METRIC,connect,3,0,ok,3318
+08-13 13:55:03.263 I/flutter (24968): HR-METRIC,rx_batch,1786603743,169,169,9914,22,253,50,170433,2435
+08-13 13:55:03.333 I/flutter (24968): [RX] ACK terkirim: {"batch_id":1786603743,"expected":169,"stored":169,"status":"ok"}
+08-13 13:58:03.213 I/flutter (24968): HR-METRIC,rx_batch,1786603744,180,180,10507,23,220,50,181383,2375
+08-13 13:58:03.333 I/flutter (24968): [RX] ACK terkirim: {"batch_id":1786603744,"expected":180,"stored":180,"status":"ok"}
+08-13 14:04:18.119 I/flutter (29359): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 14:04:19.193 I/flutter (29359): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 14:04:22.883 I/flutter (29359): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 14:04:34.421 I/flutter (29359): HR-METRIC,connect,2,0,ok,3688
+08-13 14:04:34.511 I/flutter (29359): HR-METRIC,connect,2,0,ok,2607
+08-13 14:04:36.445 I/flutter (29359): HR-METRIC,rx_batch,1786603747,392,392,23125,48,1849,27,394608,3617
+08-13 14:04:36.942 I/flutter (29359): [RX] ACK terkirim: {"batch_id":1786603747,"expected":392,"stored":392,"status":"ok"}
+08-13 14:04:37.074 I/flutter (29359): HR-METRIC,connect,3,0,ok,1299
+08-13 14:07:03.140 I/flutter (29359): HR-METRIC,rx_batch,1786603748,148,148,8725,20,230,40,149308,2306
+08-13 14:07:03.241 I/flutter (29359): [RX] ACK terkirim: {"batch_id":1786603748,"expected":148,"stored":148,"status":"ok"}
+08-13 14:10:03.051 I/flutter (29359): HR-METRIC,rx_batch,1786603749,180,180,10562,23,141,42,181218,2221
+08-13 14:10:03.149 I/flutter (29359): [RX] ACK terkirim: {"batch_id":1786603749,"expected":180,"stored":180,"status":"ok"}
+08-13 14:13:03.220 I/flutter (29359): HR-METRIC,rx_batch,1786603750,180,180,10513,23,304,46,181391,2391
+08-13 14:13:03.329 I/flutter (29359): [RX] ACK terkirim: {"batch_id":1786603750,"expected":180,"stored":180,"status":"ok"}

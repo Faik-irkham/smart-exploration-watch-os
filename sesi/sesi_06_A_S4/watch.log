@@ -1,0 +1,42 @@
+08-13 13:55:01.951 D/HR-BLE  ( 4667): sendBatch #1786603743: 9914 byte dalam 22 frame (mtu=512)
+08-13 13:55:02.013 I/flutter ( 4667): HR-METRIC,flush,1786603743,1,169,169,0,sent_unconfirmed,53,1,173535
+08-13 13:55:02.109 I/HR-METRIC( 4667): tx_batch,1786603743,169,9914,22,512,157.2,63075
+08-13 13:55:02.352 D/HR-BLE  ( 4667): ACK diterima: {"batch_id":1786603743,"expected":169,"stored":169,"status":"ok"}
+08-13 13:58:01.887 D/HR-BLE  ( 4667): sendBatch #1786603744: 10507 byte dalam 23 frame (mtu=512)
+08-13 13:58:01.936 I/flutter ( 4667): HR-METRIC,flush,1786603744,1,180,180,0,sent_unconfirmed,12,1,
+08-13 13:58:02.014 I/HR-METRIC( 4667): tx_batch,1786603744,180,10507,23,512,127.2,82595
+08-13 13:58:02.345 D/HR-BLE  ( 4667): ACK diterima: {"batch_id":1786603744,"expected":180,"stored":180,"status":"ok"}
+08-13 13:59:35.246 D/HR-BLE  ( 4667): perangkat terputus: PERANGKAT-01
+08-13 13:59:35.248 I/flutter ( 4667): [HR-BLE] state=advertising message=perangkat terputus
+08-13 14:01:01.888 I/flutter ( 4667): HR-METRIC,flush,1786603745,1,180,0,0,not_sent,,181,
+08-13 14:04:01.920 I/flutter ( 4667): HR-METRIC,flush,1786603746,2,360,0,0,not_sent,,361,
+08-13 14:04:30.688 D/HR-BLE  ( 4667): tautan terbentuk: PERANGKAT-01
+08-13 14:04:31.704 D/HR-BLE  ( 4667): MTU dinegosiasikan: 512
+08-13 14:04:32.306 D/HR-BLE  ( 4667): MTU dinegosiasikan: 512
+08-13 14:04:32.756 D/HR-BLE  ( 4667): MTU dinegosiasikan: 512
+08-13 14:04:33.207 D/HR-BLE  ( 4667): MTU dinegosiasikan: 512
+08-13 14:04:33.435 D/HR-BLE  ( 4667): CCCD write enable=true dari PERANGKAT-01
+08-13 14:04:33.439 I/flutter ( 4667): [HR-BLE] state=connected message=PERANGKAT-01
+08-13 14:04:33.522 D/HR-BLE  ( 4667): CCCD write enable=true dari PERANGKAT-01
+08-13 14:04:33.522 I/flutter ( 4667): [HR-BLE] state=connected message=PERANGKAT-01
+08-13 14:04:33.590 D/HR-BLE  ( 4667): sendBatch #1786603747: 23125 byte dalam 48 frame (mtu=512)
+08-13 14:04:33.718 I/flutter ( 4667): HR-METRIC,flush,1786603747,3,392,392,0,sent_unconfirmed,12,0,279
+08-13 14:04:33.840 I/HR-METRIC( 4667): tx_batch,1786603747,392,23125,48,512,250.4,92343
+08-13 14:04:35.287 D/HR-BLE  ( 4667): MTU dinegosiasikan: 512
+08-13 14:04:35.866 D/HR-BLE  ( 4667): MTU dinegosiasikan: 512
+08-13 14:04:35.950 D/HR-BLE  ( 4667): ACK diterima: {"batch_id":1786603747,"expected":392,"stored":392,"status":"ok"}
+08-13 14:04:36.085 D/HR-BLE  ( 4667): CCCD write enable=true dari PERANGKAT-01
+08-13 14:04:36.085 I/flutter ( 4667): [HR-BLE] state=connected message=PERANGKAT-01
+08-13 14:07:01.864 D/HR-BLE  ( 4667): sendBatch #1786603748: 8725 byte dalam 20 frame (mtu=512)
+08-13 14:07:01.921 I/flutter ( 4667): HR-METRIC,flush,1786603748,1,148,148,0,sent_unconfirmed,11,1,
+08-13 14:07:01.980 I/HR-METRIC( 4667): tx_batch,1786603748,148,8725,20,512,116.0,75236
+08-13 14:07:02.249 D/HR-BLE  ( 4667): ACK diterima: {"batch_id":1786603748,"expected":148,"stored":148,"status":"ok"}
+08-13 14:10:01.864 D/HR-BLE  ( 4667): sendBatch #1786603749: 10562 byte dalam 23 frame (mtu=512)
+08-13 14:10:01.912 I/flutter ( 4667): HR-METRIC,flush,1786603749,1,180,180,0,sent_unconfirmed,11,1,
+08-13 14:10:01.989 I/HR-METRIC( 4667): tx_batch,1786603749,180,10562,23,512,123.3,85659
+08-13 14:10:02.159 D/HR-BLE  ( 4667): ACK diterima: {"batch_id":1786603749,"expected":180,"stored":180,"status":"ok"}
+08-13 14:13:01.873 D/HR-BLE  ( 4667): sendBatch #1786603750: 10513 byte dalam 23 frame (mtu=512)
+08-13 14:13:01.922 I/flutter ( 4667): HR-METRIC,flush,1786603750,1,180,180,0,sent_unconfirmed,12,1,
+08-13 14:13:01.993 I/HR-METRIC( 4667): tx_batch,1786603750,180,10513,23,512,119.6,87936
+08-13 14:13:02.347 D/HR-BLE  ( 4667): ACK diterima: {"batch_id":1786603750,"expected":180,"stored":180,"status":"ok"}
+08-13 14:13:13.406 I/flutter ( 4667): [HR-BLE] state=idle message=null

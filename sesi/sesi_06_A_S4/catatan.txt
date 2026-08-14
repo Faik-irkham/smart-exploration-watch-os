@@ -1,0 +1,9 @@
+sesi      : sesi_06_A_S4
+mulai     : 2026-08-13 13:49:17
+baterai   : watch 95% · ponsel 79%
+skenario    : S4 — aplikasi ponsel dipaksa tutup, 5 menit (Bluetooth tetap menyala)
+gangguan mulai : 13:59 (aplikasi ponsel force-close)
+gangguan pulih : 14:04 (aplikasi ponsel dibuka kembali)
+selesai   : 2026-08-13 14:14:24
+baterai   : watch 83% · ponsel 91%
+ekspor    : watch_hr_20260813_141316.csv / phone_hr_20260813_141320.csv
