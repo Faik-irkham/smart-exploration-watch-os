@@ -1,0 +1,6 @@
+08-13 05:00:11.998 I/flutter (19932): HR-METRIC,rx_batch,1786571080,180,180,10497,23,354,12,179533,525
+08-13 05:00:12.057 I/flutter (19932): [RX] ACK terkirim: {"batch_id":1786571080,"expected":180,"stored":180,"status":"ok"}
+08-13 05:03:12.011 I/flutter (19932): HR-METRIC,rx_batch,1786571081,180,180,10497,23,292,33,179540,546
+08-13 05:03:12.103 I/flutter (19932): [RX] ACK terkirim: {"batch_id":1786571081,"expected":180,"stored":180,"status":"ok"}
+08-13 05:06:11.920 I/flutter (19932): HR-METRIC,rx_batch,1786571082,180,180,10497,23,238,38,179455,452
+08-13 05:06:12.060 I/flutter (19932): [RX] ACK terkirim: {"batch_id":1786571082,"expected":180,"stored":180,"status":"ok"}
