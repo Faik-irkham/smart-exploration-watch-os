@@ -1,0 +1,8 @@
+sesi      : sesi_01_B_S0
+mulai     : 2026-08-12 22:06:42  (dari baris session_start di log)
+versi     : B (ack_validation=true, terkonfirmasi di log)
+skenario  : S0 — kontrol, tanpa gangguan
+catatan   : folder dibuat setelah sesi berjalan; baterai awal tidak tercatat
+selesai   : 2026-08-12 22:26:12
+baterai   : watch 71% · ponsel 96%
+ekspor    : watch_hr_20260812_222453.csv / phone_hr_20260812_222457.csv

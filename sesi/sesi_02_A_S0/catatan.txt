@@ -1,0 +1,6 @@
+sesi      : sesi_02_A_S0
+mulai     : 2026-08-13 10:03:28
+baterai   : watch 96% · ponsel 59%
+selesai   : 2026-08-13 10:26:14
+baterai   : watch 84% · ponsel 72%
+ekspor    : watch_hr_20260813_102510.csv / phone_hr_20260813_102514.csv

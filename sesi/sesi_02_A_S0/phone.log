@@ -1,0 +1,20 @@
+08-13 10:04:13.645 I/flutter (11756): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 10:04:14.624 I/flutter (11756): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-13 10:04:22.452 I/flutter (11756): HR-METRIC,connect,2,0,ok,3719
+08-13 10:04:22.549 I/flutter (11756): HR-METRIC,connect,2,0,ok,2951
+08-13 10:04:22.558 I/flutter (11756): HR-METRIC,rx_batch,1786590224,12,12,720,4,50,11,12796,1797
+08-13 10:04:22.632 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590224,"expected":12,"stored":12,"status":"ok"}
+08-13 10:07:04.617 I/flutter (11756): HR-METRIC,rx_batch,1786590225,161,161,9147,21,229,40,162856,2856
+08-13 10:07:04.681 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590225,"expected":161,"stored":161,"status":"ok"}
+08-13 10:10:04.636 I/flutter (11756): HR-METRIC,rx_batch,1786590226,180,180,10317,23,222,55,181874,2873
+08-13 10:10:04.727 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590226,"expected":180,"stored":180,"status":"ok"}
+08-13 10:13:04.577 I/flutter (11756): HR-METRIC,rx_batch,1786590227,180,180,10317,23,168,50,181815,2815
+08-13 10:13:04.679 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590227,"expected":180,"stored":180,"status":"ok"}
+08-13 10:16:04.600 I/flutter (11756): HR-METRIC,rx_batch,1786590228,180,180,10317,23,206,45,181837,1360
+08-13 10:16:04.727 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590228,"expected":180,"stored":180,"status":"ok"}
+08-13 10:19:04.649 I/flutter (11756): HR-METRIC,rx_batch,1786590229,180,180,10317,23,235,57,180408,1410
+08-13 10:19:04.725 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590229,"expected":180,"stored":180,"status":"ok"}
+08-13 10:22:04.640 I/flutter (11756): HR-METRIC,rx_batch,1786590230,180,180,10391,23,236,39,180399,1399
+08-13 10:22:04.725 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590230,"expected":180,"stored":180,"status":"ok"}
+08-13 10:25:04.598 I/flutter (11756): HR-METRIC,rx_batch,1786590231,180,180,10497,23,220,32,180359,1350
+08-13 10:25:04.678 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590231,"expected":180,"stored":180,"status":"ok"}
