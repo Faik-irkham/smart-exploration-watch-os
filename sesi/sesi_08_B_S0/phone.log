@@ -1,0 +1,17 @@
+08-13 16:19:13.517 I/flutter (10496): HR-METRIC,connect,1,0,ok,2606
+08-13 16:19:13.579 I/flutter (10496): HR-METRIC,rx_batch,1786612694,5,5,347,3,6,23,4747,749
+08-13 16:19:13.639 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612694,"expected":5,"stored":5,"status":"ok"}
+08-13 16:22:02.133 I/flutter (10496): HR-METRIC,rx_batch,1786612695,169,169,9906,22,245,43,168304,304
+08-13 16:22:02.215 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612695,"expected":169,"stored":169,"status":"ok"}
+08-13 16:25:02.091 I/flutter (10496): HR-METRIC,rx_batch,1786612696,180,180,10501,23,178,61,179261,261
+08-13 16:25:02.170 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612696,"expected":180,"stored":180,"status":"ok"}
+08-13 16:28:02.029 I/flutter (10496): HR-METRIC,rx_batch,1786612697,180,180,10499,23,195,32,179200,200
+08-13 16:28:02.125 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612697,"expected":180,"stored":180,"status":"ok"}
+08-13 16:31:02.049 I/flutter (10496): HR-METRIC,rx_batch,1786612698,180,180,10497,23,147,70,179218,216
+08-13 16:31:02.124 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612698,"expected":180,"stored":180,"status":"ok"}
+08-13 16:34:02.055 I/flutter (10496): HR-METRIC,rx_batch,1786612699,180,180,10498,23,182,43,179218,226
+08-13 16:34:02.119 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612699,"expected":180,"stored":180,"status":"ok"}
+08-13 16:37:02.108 I/flutter (10496): HR-METRIC,rx_batch,1786612700,180,180,10503,23,221,43,179278,271
+08-13 16:37:02.259 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612700,"expected":180,"stored":180,"status":"ok"}
+08-13 16:40:02.156 I/flutter (10496): HR-METRIC,rx_batch,1786612701,180,180,10497,23,213,53,179321,321
+08-13 16:40:02.255 I/flutter (10496): [RX] ACK terkirim: {"batch_id":1786612701,"expected":180,"stored":180,"status":"ok"}
