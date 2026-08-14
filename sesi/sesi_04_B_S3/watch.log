@@ -1,0 +1,24 @@
+08-13 12:10:48.375 I/flutter ( 4045): HR-METRIC,flush,1786597302,1,180,0,0,not_sent,,181,
+08-13 12:13:48.392 I/flutter ( 4045): HR-METRIC,flush,1786597303,2,360,0,0,not_sent,,361,
+08-13 12:16:09.738 D/HR-BLE  ( 4045): tautan terbentuk: PERANGKAT-01
+08-13 12:16:10.566 D/HR-BLE  ( 4045): MTU dinegosiasikan: 512
+08-13 12:16:10.869 D/HR-BLE  ( 4045): MTU dinegosiasikan: 512
+08-13 12:16:11.008 D/HR-BLE  ( 4045): CCCD write enable=true dari PERANGKAT-01
+08-13 12:16:11.009 I/flutter ( 4045): [HR-BLE] state=connected message=PERANGKAT-01
+08-13 12:16:11.058 D/HR-BLE  ( 4045): sendBatch #1786597304: 29330 byte dalam 60 frame (mtu=512)
+08-13 12:16:11.876 I/HR-METRIC( 4045): tx_batch,1786597304,503,29330,60,512,816.9,35904
+08-13 12:16:13.169 D/HR-BLE  ( 4045): ACK diterima: {"batch_id":1786597304,"expected":503,"stored":503,"status":"ok"}
+08-13 12:16:13.234 I/flutter ( 4045): HR-METRIC,flush,1786597304,3,503,503,0,ok,2129,2,2224
+08-13 12:16:48.339 D/HR-BLE  ( 4045): sendBatch #1786597305: 2208 byte dalam 7 frame (mtu=512)
+08-13 12:16:48.390 I/HR-METRIC( 4045): tx_batch,1786597305,37,2208,7,512,51.3,43053
+08-13 12:16:48.542 D/HR-BLE  ( 4045): ACK diterima: {"batch_id":1786597305,"expected":37,"stored":37,"status":"ok"}
+08-13 12:16:48.563 I/flutter ( 4045): HR-METRIC,flush,1786597305,1,37,37,0,ok,209,1,
+08-13 12:19:48.337 D/HR-BLE  ( 4045): sendBatch #1786597306: 10497 byte dalam 23 frame (mtu=512)
+08-13 12:19:48.455 I/HR-METRIC( 4045): tx_batch,1786597306,180,10497,23,512,117.5,89307
+08-13 12:19:48.725 D/HR-BLE  ( 4045): ACK diterima: {"batch_id":1786597306,"expected":180,"stored":180,"status":"ok"}
+08-13 12:19:48.747 I/flutter ( 4045): HR-METRIC,flush,1786597306,1,180,180,0,ok,396,1,
+08-13 12:22:48.347 D/HR-BLE  ( 4045): sendBatch #1786597307: 10527 byte dalam 23 frame (mtu=512)
+08-13 12:22:48.451 I/HR-METRIC( 4045): tx_batch,1786597307,180,10527,23,512,103.4,101784
+08-13 12:22:49.219 D/HR-BLE  ( 4045): ACK diterima: {"batch_id":1786597307,"expected":180,"stored":180,"status":"ok"}
+08-13 12:22:49.261 I/flutter ( 4045): HR-METRIC,flush,1786597307,1,180,180,0,ok,886,1,
+08-13 12:22:54.818 I/flutter ( 4045): [HR-BLE] state=idle message=null

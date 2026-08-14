@@ -1,0 +1,21 @@
+08-13 10:30:11.408 I/flutter (11756): HR-METRIC,connect,5,0,ok,5146
+08-13 10:30:11.475 I/flutter (11756): HR-METRIC,rx_batch,1786590232,6,6,407,3,51,12,6298,1294
+08-13 10:30:11.503 I/flutter (11756): HR-METRIC,connect,5,0,ok,3995
+08-13 10:30:11.597 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590232,"expected":6,"stored":6,"status":"ok"}
+08-13 10:30:11.808 I/flutter (11756): HR-METRIC,connect,5,0,ok,3110
+08-13 10:33:04.525 I/flutter (11756): HR-METRIC,rx_batch,1786590233,172,172,10033,22,182,53,173347,2348
+08-13 10:33:04.639 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590233,"expected":172,"stored":172,"status":"ok"}
+08-13 10:36:04.574 I/flutter (11756): HR-METRIC,rx_batch,1786590234,180,180,10497,23,219,37,181389,2398
+08-13 10:36:04.664 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590234,"expected":180,"stored":180,"status":"ok"}
+08-13 10:42:45.638 I/flutter (11756): HR-METRIC,connect,6,0,ok,1509
+08-13 10:42:48.314 I/flutter (11756): HR-METRIC,connect,7,1,fail,2371
+08-13 10:42:48.314 I/flutter (11756): [RX] error: Gagal connect: FlutterBluePlusException | discoverServices | fbp-code: 6 | device is not connected
+08-13 10:42:49.661 I/flutter (11756): HR-METRIC,connect,8,1,ok,1062
+08-13 10:42:53.337 I/flutter (11756): HR-METRIC,connect,10,1,ok,2014
+08-13 10:42:53.467 I/flutter (11756): HR-METRIC,connect,10,1,ok,1220
+08-13 10:45:04.556 I/flutter (11756): HR-METRIC,rx_batch,1786590238,138,138,8061,18,190,47,139167,2163
+08-13 10:45:04.645 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590238,"expected":138,"stored":138,"status":"ok"}
+08-13 10:48:04.617 I/flutter (11756): HR-METRIC,rx_batch,1786590239,180,180,10497,23,250,44,181229,2230
+08-13 10:48:04.688 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590239,"expected":180,"stored":180,"status":"ok"}
+08-13 10:51:04.576 I/flutter (11756): HR-METRIC,rx_batch,1786590240,180,180,10497,23,225,36,181182,2187
+08-13 10:51:04.690 I/flutter (11756): [RX] ACK terkirim: {"batch_id":1786590240,"expected":180,"stored":180,"status":"ok"}
