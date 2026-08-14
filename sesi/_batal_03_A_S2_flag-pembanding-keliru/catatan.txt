@@ -1,0 +1,11 @@
+sesi      : sesi_03_A_S2
+mulai     : 2026-08-13 05:10:05
+baterai   : watch 36% · ponsel 100%
+mulai rekam : 2026-08-13 05:10:59  (session_start, ack_validation=false)
+skenario    : S2 — Bluetooth ponsel dimatikan 2 menit
+rencana     : putus 05:19:00 · pulih 05:21:00 · berhenti 05:31:00
+gangguan mulai : 05:19:00 (Bluetooth ponsel dimatikan)
+gangguan pulih : 05:21:00 (Bluetooth ponsel dinyalakan)
+selesai   : 2026-08-13 05:33:07
+baterai   : watch 23% · ponsel 100%
+ekspor    : watch_hr_20260813_053209.csv / phone_hr_20260813_053213.csv
