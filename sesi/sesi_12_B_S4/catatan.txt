@@ -1,0 +1,11 @@
+sesi      : sesi_12_B_S4
+mulai     : 2026-08-14 22:08:25
+baterai   : watch 54% · ponsel 92%
+mulai rekam : 2026-08-14 22:14:32  (session_start, await_ack=true → versi B)
+skenario    : S4 — aplikasi ponsel dipaksa tutup, 5 menit (Bluetooth tetap menyala)
+rencana     : force-close 22:21 · buka lagi 22:26 · berhenti 22:33 (setelah flush 22:32)
+gangguan mulai : 
+gangguan pulih : 
+selesai   : 2026-08-14 22:36:39
+baterai   : watch 39% · ponsel 99%
+ekspor    : watch_hr_20260814_223537.csv / phone_hr_20260814_223541.csv

@@ -1,0 +1,27 @@
+08-14 22:26:32.398 I/flutter (19843): HR-METRIC,flush,1786720450,1,180,0,0,not_sent,,181,
+08-14 22:27:18.627 D/HR-BLE  (19843): tautan terbentuk: PERANGKAT-01
+08-14 22:27:19.565 D/HR-BLE  (19843): MTU dinegosiasikan: 512
+08-14 22:27:19.754 D/HR-BLE  (19843): MTU dinegosiasikan: 512
+08-14 22:27:20.221 D/HR-BLE  (19843): MTU dinegosiasikan: 512
+08-14 22:27:20.668 D/HR-BLE  (19843): MTU dinegosiasikan: 512
+08-14 22:27:20.843 D/HR-BLE  (19843): CCCD write enable=true dari PERANGKAT-01
+08-14 22:27:20.844 I/flutter (19843): [HR-BLE] state=connected message=PERANGKAT-01
+08-14 22:27:20.887 D/HR-BLE  (19843): sendBatch #1786720451: 13624 byte dalam 29 frame (mtu=512)
+08-14 22:27:20.941 D/HR-BLE  (19843): CCCD write enable=true dari PERANGKAT-01
+08-14 22:27:20.942 I/flutter (19843): [HR-BLE] state=connected message=PERANGKAT-01
+08-14 22:27:21.367 I/HR-METRIC(19843): tx_batch,1786720451,229,13624,29,512,480.4,28358
+08-14 22:27:21.968 D/HR-BLE  (19843): ACK diterima: {"batch_id":1786720451,"expected":229,"stored":229,"status":"ok"}
+08-14 22:27:21.986 I/flutter (19843): HR-METRIC,flush,1786720451,2,229,229,0,ok,1088,1,1141
+08-14 22:29:32.368 D/HR-BLE  (19843): sendBatch #1786720452: 7786 byte dalam 18 frame (mtu=512)
+08-14 22:29:32.458 I/HR-METRIC(19843): tx_batch,1786720452,131,7786,18,512,90.4,86137
+08-14 22:29:32.750 D/HR-BLE  (19843): ACK diterima: {"batch_id":1786720452,"expected":131,"stored":131,"status":"ok"}
+08-14 22:29:32.780 I/flutter (19843): HR-METRIC,flush,1786720452,1,131,131,0,ok,394,1,
+08-14 22:32:32.370 D/HR-BLE  (19843): sendBatch #1786720453: 10734 byte dalam 24 frame (mtu=512)
+08-14 22:32:32.488 I/HR-METRIC(19843): tx_batch,1786720453,180,10734,24,512,118.5,90590
+08-14 22:32:33.013 D/HR-BLE  (19843): ACK diterima: {"batch_id":1786720453,"expected":180,"stored":180,"status":"ok"}
+08-14 22:32:33.040 I/flutter (19843): HR-METRIC,flush,1786720453,1,180,180,0,ok,651,1,
+08-14 22:35:32.372 D/HR-BLE  (19843): sendBatch #1786720454: 10708 byte dalam 24 frame (mtu=512)
+08-14 22:35:32.500 I/HR-METRIC(19843): tx_batch,1786720454,180,10708,24,512,127.5,83994
+08-14 22:35:32.796 D/HR-BLE  (19843): ACK diterima: {"batch_id":1786720454,"expected":180,"stored":180,"status":"ok"}
+08-14 22:35:32.815 I/flutter (19843): HR-METRIC,flush,1786720454,1,180,180,0,ok,436,1,
+08-14 22:35:35.473 I/flutter (19843): [HR-BLE] state=idle message=null

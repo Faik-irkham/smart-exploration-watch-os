@@ -1,0 +1,17 @@
+08-14 21:51:15.960 I/flutter (24755): HR-METRIC,rx_batch,1786717171,174,174,10323,23,213,44,174952,1945
+08-14 21:51:16.047 I/flutter (24755): [RX] ACK terkirim: {"batch_id":1786717171,"expected":174,"stored":174,"status":"ok"}
+08-14 21:57:24.665 I/flutter ( 7700): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-14 21:57:25.698 I/flutter ( 7700): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-14 21:57:26.618 I/flutter ( 7700): [RX] error: Nyalakan Bluetooth lalu coba lagi
+08-14 21:57:46.543 I/flutter ( 7700): HR-METRIC,connect,1,1,fail,2827
+08-14 21:57:46.543 I/flutter ( 7700): [RX] error: Gagal connect: FlutterBluePlusException | connect | android-code: 62 | CONNECTION_FAILED_ESTABLISHMENT
+08-14 21:57:48.502 I/flutter ( 7700): HR-METRIC,connect,2,1,ok,1624
+08-14 21:57:51.032 I/flutter ( 7700): HR-METRIC,rx_batch,1786717174,393,393,23292,49,2113,70,396016,4024
+08-14 21:57:51.155 I/flutter ( 7700): HR-METRIC,connect,3,1,ok,2651
+08-14 21:57:51.252 I/flutter ( 7700): [RX] ACK terkirim: {"batch_id":1786717174,"expected":393,"stored":393,"status":"ok"}
+08-14 22:00:16.046 I/flutter ( 7700): HR-METRIC,rx_batch,1786717175,147,147,8731,20,315,44,148039,2036
+08-14 22:00:16.129 I/flutter ( 7700): [RX] ACK terkirim: {"batch_id":1786717175,"expected":147,"stored":147,"status":"ok"}
+08-14 22:03:16.075 I/flutter ( 7700): HR-METRIC,rx_batch,1786717176,180,180,10688,24,364,36,181065,2065
+08-14 22:03:16.153 I/flutter ( 7700): [RX] ACK terkirim: {"batch_id":1786717176,"expected":180,"stored":180,"status":"ok"}
+08-14 22:06:15.966 I/flutter ( 7700): HR-METRIC,rx_batch,1786717177,180,180,10746,24,231,43,180955,1957
+08-14 22:06:16.035 I/flutter ( 7700): [RX] ACK terkirim: {"batch_id":1786717177,"expected":180,"stored":180,"status":"ok"}
