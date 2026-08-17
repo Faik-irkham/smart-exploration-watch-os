@@ -1,0 +1,11 @@
+Model Information:
+* title:	Human Heart 3D Model | Anatomy | Medical Project
+* source:	https://sketchfab.com/3d-models/human-heart-3d-model-anatomy-medical-project-5da08bb137014f0392c69f9997f777cd
+* author:	Mesh-Magnet (https://sketchfab.com/Mesh-Magnet)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Human Heart 3D Model | Anatomy | Medical Project" (https://sketchfab.com/3d-models/human-heart-3d-model-anatomy-medical-project-5da08bb137014f0392c69f9997f777cd) by Mesh-Magnet (https://sketchfab.com/Mesh-Magnet) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

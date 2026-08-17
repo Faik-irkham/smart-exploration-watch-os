@@ -29,3 +29,10 @@
 # merujuknya). Data 18 sesi resmi ada di /sesi/ dan tetap dilacak.
 /uji*/
 /uji*.log
+
+# Materi penulisan tambahan: naskah PDF, tanggapan reviewer, serta berkas
+# rujukan (persamaan dan paper pembanding). Hanya disimpan di lokal.
+*.pdf
+/RESPONSE-TO-REVIEWERS.md
+/Ref-Equation/
+/paper-rujukan-perbandingan/
