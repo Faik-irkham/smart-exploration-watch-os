@@ -308,7 +308,9 @@ class BleReceiver {
         // sebelum payload dirangkai, bukan menunggu JSON gagal di-parse.
         final seq = _readUint(value, 1, 2);
         if (seq != _rxNextSeq) {
-          debugPrint('[RX] frame tidak berurutan: seq=$seq, harusnya $_rxNextSeq');
+          debugPrint(
+            '[RX] frame tidak berurutan: seq=$seq, harusnya $_rxNextSeq',
+          );
           _rxSeqBroken = true;
         }
         _rxNextSeq = seq + 1;
@@ -346,7 +348,7 @@ class BleReceiver {
     return null;
   }
 
-  /// Baca bilangan bulat big-endian sepanjang [length] byte mulai dari [offset].
+  /// Baca bilangan bulat sepanjang [length] byte mulai dari [offset].
   static int _readUint(List<int> frame, int offset, int length) {
     var value = 0;
     for (var i = 0; i < length; i++) {
@@ -395,12 +397,7 @@ class BleReceiver {
     final defect = _inspectBatch(bytes, crc, batchId);
     if (defect != null) {
       debugPrint('[RX] batch $batchId ditolak: $defect');
-      await _sendAck(
-        batchId: batchId,
-        expected: 0,
-        stored: 0,
-        status: defect,
-      );
+      await _sendAck(batchId: batchId, expected: 0, stored: 0, status: defect);
       return;
     }
 
