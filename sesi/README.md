@@ -26,6 +26,9 @@ Folder berawalan `_batal_` adalah sesi yang dibatalkan; alasannya ada pada nama
 folder. Sesi-sesi itu tidak masuk analisis mana pun, dan disertakan agar seluruh
 perekaman yang pernah dilakukan terlihat.
 
+Folder `_agregat/` berisi `agregat.md`, yaitu tabel gabungan seluruh sesi
+(ringkasan per versi dan skenario).
+
 ## Isi tiap folder
 
 | Berkas | Isi |
