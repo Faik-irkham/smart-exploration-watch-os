@@ -10,9 +10,9 @@ class ReceiverState {
   });
 
   const ReceiverState.initial()
-      : status = ReceiverStatus.idle,
-        message = null,
-        history = const [];
+    : status = ReceiverStatus.idle,
+      message = null,
+      history = const [];
 
   final ReceiverStatus status;
   final String? message;

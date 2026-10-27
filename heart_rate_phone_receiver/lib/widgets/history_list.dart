@@ -33,9 +33,7 @@ class HistoryList extends StatelessWidget {
             size: 18,
           ),
           title: Text('${r.bpm.toStringAsFixed(0)} BPM'),
-          subtitle: Text(
-            'Akurasi ${r.accuracy} • ${formatDateTime(r.time)}',
-          ),
+          subtitle: Text('Akurasi ${r.accuracy} • ${formatDateTime(r.time)}'),
         );
       },
     );

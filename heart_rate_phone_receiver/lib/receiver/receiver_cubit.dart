@@ -25,15 +25,15 @@ class ReceiverCubit extends Cubit<ReceiverState> {
   StreamSubscription<List<HeartRateReading>>? _readingsSub;
 
   void _onStatus() {
-    emit(state.copyWith(status: _ble.status.value, message: _ble.message.value));
+    emit(
+      state.copyWith(status: _ble.status.value, message: _ble.message.value),
+    );
   }
 
   /// Satu batch baru dari watch (urut terlama→terbaru): taruh di paling atas
   /// daftar (terbaru lebih dulu) dalam satu kali update.
   void _onReadings(List<HeartRateReading> readings) {
-    emit(state.copyWith(
-      history: [...readings.reversed, ...state.history],
-    ));
+    emit(state.copyWith(history: [...readings.reversed, ...state.history]));
   }
 
   /// Muat record yang sudah pernah diterima & disimpan sebelumnya.

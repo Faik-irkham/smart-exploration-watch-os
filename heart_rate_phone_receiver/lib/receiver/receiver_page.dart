@@ -40,7 +40,8 @@ class _ReceiverView extends StatelessWidget {
       message = 'Ekspor gagal: $e';
     }
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -89,9 +90,11 @@ class _ReceiverView extends StatelessWidget {
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: state.isActive ? cubit.stop : cubit.start,
-            icon: Icon(state.isActive
-                ? Icons.bluetooth_disabled
-                : Icons.bluetooth_searching),
+            icon: Icon(
+              state.isActive
+                  ? Icons.bluetooth_disabled
+                  : Icons.bluetooth_searching,
+            ),
             label: Text(state.isActive ? 'Putuskan' : 'Hubungkan watch'),
           ),
         );
